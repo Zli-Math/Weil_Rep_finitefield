@@ -23,7 +23,6 @@ variable [bilinearB : IsBilinear B]
 
 
 omit bilinearB in
-lemma inv_def {a : Heisenberg B} : a⁻¹ = ⟨ -a.1 , -a.2 + B  a.1  a.1⟩ := rfl
 
 instance : HMul (Heisenberg B) (Heisenberg B) (Heisenberg B) where
   hMul := fun a b => ⟨ a.1 + b.1 , a.2 + b.2 + B  a.1  b.1 ⟩
@@ -43,7 +42,7 @@ instance instSemigroup : Semigroup (Heisenberg B) where
       abel
 
 
-instance : Inv  ( Heisenberg B) where
+instance instInv: Inv  ( Heisenberg B) where
    inv := fun a => ⟨ -a.1 , -a.2 + B  a.1  a.1⟩
 
 omit bilinearB in
@@ -103,4 +102,24 @@ instance instGroup : Group (Heisenberg B) where
       _ = _ := by rfl
 
 
+
 end Heisenberg
+
+noncomputable section Eg
+
+local notation "VV" => (ZMod 2)
+local notation "KK" => (ZMod 2)
+
+abbrev BB : VV → VV → KK := fun a b => a * b
+
+
+abbrev a : Heisenberg (BB) := ⟨1,0⟩
+
+example : a * a = ⟨0,1⟩ := by
+  simp [Heisenberg.mul_def]
+  ring_nf
+  apply FiniteField.cast_card_eq_zero
+
+
+
+end Eg
