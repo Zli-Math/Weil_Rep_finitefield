@@ -13,23 +13,21 @@ x : V
 y : K
 
 
-
-
-
 class Biform where
 B :V × V → K
-
-
-namespace heisenberg
-
 
 
 class IsBilinear (B : V × V → K) where
 llinear : ∀ r w v , B (r + w , v) =  B ( r  , v) + B ( w , v)
 rlinear : ∀ r w v , B ( w , r + v) = B ( w , r ) + B ( w, v )
 
+namespace heisenberg
+
+
 variable ( B : V × V → K ) [bilinearB : IsBilinear K V B]
 
+
+--the operator on Heisenberg group
 def hprod  (a b : heisenbergele K V B)  : heisenbergele K V B:=
 ⟨ a.x + b.x , a.y + b.y + B ( a.x , b.x ) ⟩
 
@@ -37,6 +35,7 @@ instance : Add (heisenbergele K V B) where
    add := hprod K V B
 
 lemma add_def (a b : heisenbergele K V B) : a + b = hprod K V B a b := rfl
+
 
 instance : Neg  ( heisenbergele K V B) where
    neg := fun a => ⟨ -a.x , -a.y + B ( a.x , a.x)⟩
@@ -47,6 +46,8 @@ instance : HMul (heisenbergele K V B) (heisenbergele K V B) (heisenbergele K V B
 instance : Zero (heisenbergele K V B) := ⟨0 , 0⟩
 
 lemma zero_def : (0 : heisenbergele K V B ) = ⟨0, 0⟩ := rfl
+
+
 lemma hprod_assoc (a b c : heisenbergele K V B) : a + b +c = a+ ( b + c ) := by
     simp [add_def ,hprod , add_assoc]
     simp [bilinearB.llinear , bilinearB.rlinear ]
