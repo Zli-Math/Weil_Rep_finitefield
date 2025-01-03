@@ -13,6 +13,9 @@ x : V
 y : K
 
 
+
+
+
 class Biform where
 B :V × V → K
 
