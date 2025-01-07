@@ -11,18 +11,14 @@ variable (B : V → V → K)
 
 abbrev Heisenberg (B : V → V → K) := V × K
 
-
 class IsBilinear (B : V →  V → K) where
   llinear : ∀ r w v , B (r + w) v =  B r  v + B w  v
   rlinear : ∀ r w v , B w (r + v) = B w r + B  w v
 
 namespace Heisenberg
 
-variable {B}
 variable [bilinearB : IsBilinear B]
 
-
-omit bilinearB in
 
 instance : HMul (Heisenberg B) (Heisenberg B) (Heisenberg B) where
   hMul := fun a b => ⟨ a.1 + b.1 , a.2 + b.2 + B  a.1  b.1 ⟩
@@ -123,3 +119,83 @@ example : a * a = ⟨0,1⟩ := by
 
 
 end Eg
+
+
+section QuadraticForm
+
+open Heisenberg
+
+
+
+variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V][Module K V]
+variable (B : V → V → K )[bilinearB : IsBilinear B]
+
+
+
+def form ( f: V → K) : ( V →  V →  K ) := fun x => (fun y => f (x+y) - f (x) - f (y))
+
+
+class Quadraticform (f : V → K) where
+bilinear : IsBilinear (form f)
+sq_smul : ∀ (t : K) v , f ( t • v ) = t^2 * f (v)
+
+
+
+class addQuadraticform (f : V → K)  where
+Quadf : Quadraticform f
+additive : ∀ a b , f (a+b) = f (a) + f (b)
+
+
+
+variable (f : V → K )[Quadraticform f]
+
+def nondegenerate (B : V → V → K) := ∀ v , (∀ w , B v w =0) → v = 0
+
+#check nondegenerate B
+
+def alternatingform (B : V → V → K) : (V → V → K )  := fun v => (fun w => B v w - B w v)
+
+#check alternatingform B
+
+abbrev C : Subgroup (Heisenberg B) := Subgroup.center _
+
+instance SubK : Subgroup (Heisenberg B) where
+  carrier := { a | a.1 = 0 }
+  mul_mem' := by
+    intro a b ha hb
+    simp_all
+    rw [mul_def]
+    simp [ha , hb]
+  one_mem' := by
+    simp
+  inv_mem' := by
+    intro x h
+    simp_all
+    simp [inv_def , h]
+
+
+--Proposition 1.4
+omit [Module K V] in
+theorem centralextension : (SubK B).carrier ⊆ (C B).carrier := by
+  intro x h
+  simp [SubK] at h
+  rw [Subgroup.mem_carrier]
+  rw [Subgroup.mem_center_iff]
+  intro y
+  repeat rw [mul_def]
+  simp [add_comm , h]
+--Subgroup.subgroupOf
+
+omit [Module K V] in
+theorem center_is_K_of_nondegenerateB (nondege: nondegenerate (alternatingform B) ) : (SubK B) = (C B) := by
+  ext x
+  constructor
+  apply centralextension
+  intro h
+  simp [SubK , C] at h ⊢
+  rw [Subgroup.mem_center_iff] at h
+  simp_rw [mul_def] at h
+  simp [add_comm] at h
+  simp [nondegenerate , alternatingform] at nondege
+  specialize nondege x.1
+  exact nondege (by convert h using 1; simp [sub_eq_zero] ; tauto)
