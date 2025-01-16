@@ -101,6 +101,8 @@ instance instGroup : Group (Heisenberg B) where
 
 end Heisenberg
 
+end HeisenbergGroup
+
 noncomputable section Eg
 
 local notation "VV" => (ZMod 2)
@@ -121,7 +123,7 @@ example : a * a = ⟨0,1⟩ := by
 end Eg
 
 
-section QuadraticForm
+section Quadratic_Form
 
 open Heisenberg
 
@@ -199,3 +201,102 @@ theorem center_is_K_of_nondegenerateB (nondege: nondegenerate (alternatingform B
   simp [nondegenerate , alternatingform] at nondege
   specialize nondege x.1
   exact nondege (by convert h using 1; simp [sub_eq_zero] ; tauto)
+
+end Quadratic_Form
+
+
+section Pseudo_Symplectic_Group
+
+variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V]
+
+variable (B : V → V → K ) (nondegenerate_symplectic_form : nondegenerate (alternatingform B))
+
+--symplectic_form
+local notation "B_s" => (alternatingform B)
+
+structure symplectic_space where
+space := V
+form := B_s
+
+variable (V_s: symplectic_space B)
+
+
+--Symplectic group Sp(V)
+namespace symplectic
+
+structure symplectic_automorphism where
+σ : V → V
+preserveB : ∀ w v, B (σ w) (σ v) - B w v = B (σ v) (σ w) - B v w
+
+
+omit [AddCommGroup V] in
+lemma sym_auto_comp (σ₁ σ₂ : symplectic_automorphism B) : ∀ w v, B ((σ₁.1 ∘ σ₂.1) w) ((σ₁.1 ∘ σ₂.1) v) - B w v = B ((σ₁.1 ∘ σ₂.1) v) ((σ₁.1 ∘ σ₂.1) w) - B v w := by
+  intro w v
+  simp [Function.comp]
+  have h₁ : B (σ₁.1 (σ₂.1 w)) (σ₁.1 (σ₂.1 v)) - B (σ₂.1 w) (σ₂.1 v) = B (σ₁.1 (σ₂.1 v)) (σ₁.1 (σ₂.1 w)) - B (σ₂.1 v) (σ₂.1 w) := σ₁.preserveB (σ₂.1 w) (σ₂.1 v)
+  have h₂ : B (σ₂.1 w) (σ₂.1 v) - B w v = B (σ₂.1 v) (σ₂.1 w) - B v w := σ₂.preserveB w v
+  linear_combination h₁ + h₂
+
+instance : HMul (symplectic_automorphism B)  (symplectic_automorphism B) (symplectic_automorphism B) where
+  hMul := fun σ₁ σ₂ =>  ⟨σ₁.1 ∘  σ₂.1, sym_auto_comp B σ₁ σ₂⟩
+
+omit [AddCommGroup V]
+lemma  mul_def (a b : symplectic_automorphism B) : a * b = ⟨a.1 ∘ b.1, sym_auto_comp B a b⟩:= rfl
+
+
+instance instSemigroup : Semigroup (symplectic_automorphism B) where
+  mul := HMul.hMul
+  mul_assoc := by
+    intro a b c
+    simp [mul_def]
+    rfl
+
+lemma sym_auto_inv (σ : symplectic_automorphism B) : ∀ w v, B (Function.invFun σ.1  w) (Function.invFun σ.1 v) - B w v = B (Function.invFun σ.1 v) (Function.invFun σ.1 w) - B v w := by sorry
+
+
+instance  instInv: Inv  ( symplectic_automorphism B) where
+   inv := fun a => ⟨Function.invFun a.1, sorry⟩
+
+lemma inv_def (a : Heisenberg B) : a⁻¹ = sorry := sorry
+
+instance hasOne: One (symplectic_automorphism B)  where
+  one := id
+
+@[simp]
+lemma One_def : (1 : symplectic_automorphism B) = sorry := sorry
+
+
+
+instance instMulOneClass : MulOneClass (symplectic_automorphism B) where
+  one_mul := sorry
+  mul_one := sorry
+
+
+
+instance instMonoid : Monoid (symplectic_automorphism B) where
+  one_mul := sorry
+  mul_one := sorry
+  npow := npowRecAuto
+  npow_zero := by intros; rfl
+  npow_succ := by intros; rfl
+
+instance instGroup : Group (symplectic_automorphism B) where
+  one_mul := sorry
+  mul_one := sorry
+  inv_mul_cancel := sorry
+
+end symplectic
+
+
+
+
+
+
+
+
+
+
+
+
+
+end Pseudo_Symplectic_Group
