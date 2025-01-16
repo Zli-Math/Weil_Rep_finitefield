@@ -118,8 +118,6 @@ example : a * a = ⟨0,1⟩ := by
   ring_nf
   apply FiniteField.cast_card_eq_zero
 
-
-
 end Eg
 
 
@@ -211,9 +209,12 @@ variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V]
 
 variable (B : V → V → K ) (nondegenerate_symplectic_form : nondegenerate (alternatingform B))
 
+open Function
+
 --symplectic_form
 local notation "B_s" => (alternatingform B)
 
+--symplectic_space
 structure symplectic_space where
 space := V
 form := B_s
@@ -224,8 +225,10 @@ variable (V_s: symplectic_space B)
 --Symplectic group Sp(V)
 namespace symplectic
 
+@[ext]
 structure symplectic_automorphism where
 σ : V → V
+bijective : Bijective σ
 preserveB : ∀ w v, B (σ w) (σ v) - B w v = B (σ v) (σ w) - B v w
 
 
@@ -238,10 +241,10 @@ lemma sym_auto_comp (σ₁ σ₂ : symplectic_automorphism B) : ∀ w v, B ((σ�
   linear_combination h₁ + h₂
 
 instance : HMul (symplectic_automorphism B)  (symplectic_automorphism B) (symplectic_automorphism B) where
-  hMul := fun σ₁ σ₂ =>  ⟨σ₁.1 ∘  σ₂.1, sym_auto_comp B σ₁ σ₂⟩
+  hMul := fun σ₁ σ₂ =>  ⟨σ₁.1 ∘  σ₂.1, Bijective.comp σ₁.2 σ₂.2, sym_auto_comp B σ₁ σ₂⟩
 
-omit [AddCommGroup V]
-lemma  mul_def (a b : symplectic_automorphism B) : a * b = ⟨a.1 ∘ b.1, sym_auto_comp B a b⟩:= rfl
+omit [AddCommGroup V] in
+lemma  mul_def (a b : symplectic_automorphism B) : a * b = ⟨a.1 ∘ b.1, Bijective.comp a.2 b.2 ,sym_auto_comp B a b⟩:= rfl
 
 
 instance instSemigroup : Semigroup (symplectic_automorphism B) where
@@ -251,39 +254,55 @@ instance instSemigroup : Semigroup (symplectic_automorphism B) where
     simp [mul_def]
     rfl
 
-lemma sym_auto_inv (σ : symplectic_automorphism B) : ∀ w v, B (Function.invFun σ.1  w) (Function.invFun σ.1 v) - B w v = B (Function.invFun σ.1 v) (Function.invFun σ.1 w) - B v w := by sorry
+lemma sym_auto_inv (σ : symplectic_automorphism B) : ∀ w v, B (invFun σ.1  w) (invFun σ.1 v) - B w v = B (invFun σ.1 v) (invFun σ.1 w) - B v w := by
+   intro w v
+   have h : B (σ.1 (invFun σ.1 w)) (σ.1 (invFun σ.1 v)) - B (invFun σ.1  w) (invFun σ.1 v) = B (σ.1 (invFun σ.1 v)) (σ.1 (invFun σ.1 w)) - B (invFun σ.1 v) (invFun σ.1 w):= by rw [σ.preserveB]
+   rw [invFun_eq (σ.bijective.2 w), invFun_eq (σ.bijective.2 v)] at h
+   linear_combination -h
 
+lemma inv_bijective (σ : V → V) (h : Bijective σ ) : Bijective (invFun σ) := by
+  apply Function.bijective_iff_has_inverse.2
+  use σ
+  constructor
+  · exact RightInverse.leftInverse (rightInverse_invFun h.2)
+  · exact LeftInverse.rightInverse (leftInverse_invFun h.1)
 
-instance  instInv: Inv  ( symplectic_automorphism B) where
-   inv := fun a => ⟨Function.invFun a.1, sorry⟩
+noncomputable instance  instInv: Inv  ( symplectic_automorphism B) where
+   inv := fun a => ⟨invFun a.1, inv_bijective a.1 a.2, sym_auto_inv B a⟩
 
-lemma inv_def (a : Heisenberg B) : a⁻¹ = sorry := sorry
+lemma inv_def (a : symplectic_automorphism B) : a⁻¹ =  ⟨invFun a.1, inv_bijective a.1 a.2, sym_auto_inv B a⟩ := by rfl
 
 instance hasOne: One (symplectic_automorphism B)  where
-  one := id
+  one := ⟨id, Function.bijective_id, by simp⟩
 
+omit [AddCommGroup V] in
 @[simp]
-lemma One_def : (1 : symplectic_automorphism B) = sorry := sorry
+lemma One_def : (1 : symplectic_automorphism B) = ⟨id, Function.bijective_id, by simp⟩  := rfl
 
 
 
 instance instMulOneClass : MulOneClass (symplectic_automorphism B) where
-  one_mul := sorry
-  mul_one := sorry
+  one_mul := by
+    intro a
+    simp [mul_def]
 
+  mul_one := by
+    intro a
+    simp [mul_def]
 
 
 instance instMonoid : Monoid (symplectic_automorphism B) where
-  one_mul := sorry
-  mul_one := sorry
+  one_mul := one_mul
+  mul_one := mul_one
   npow := npowRecAuto
   npow_zero := by intros; rfl
   npow_succ := by intros; rfl
 
-instance instGroup : Group (symplectic_automorphism B) where
-  one_mul := sorry
-  mul_one := sorry
-  inv_mul_cancel := sorry
+noncomputable instance instGroup : Group (symplectic_automorphism B) where
+  inv_mul_cancel := by
+    intro a
+    simp [inv_def, mul_def]
+    apply Function.invFun_comp a.2.1
 
 end symplectic
 
