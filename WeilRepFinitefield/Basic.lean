@@ -148,9 +148,16 @@ additive : ∀ a b , f (a + b) = f (a) + f (b)
 
 variable (f : V → K )[Quadraticform f]
 
-def nondegenerate (B : V → V → K) := ∀ v , (∀ w , B v w =0) → v = 0
 
-#check nondegenerate B
+class NonDegenerate (B : V → V → K) where
+  nondeg : ∀ v , (∀ w , B v w =0) → v = 0
+
+
+def isNonDegenerate (B : V → V → K) := ∀ v , (∀ w , B v w =0) → v = 0
+
+omit [Module K V] in
+lemma NonDegenerate.isNonDegenerate (B : V → V → K) [h : NonDegenerate B] : isNonDegenerate B := h.nondeg
+
 
 def alternatingform (B : V → V → K) : (V → V → K )  := fun v => (fun w => B v w - B w v)
 
@@ -186,7 +193,8 @@ theorem centralextension : (SubK B).carrier ⊆ (C B).carrier := by
 --Subgroup.subgroupOf
 
 omit [Module K V] in
-theorem center_is_K_of_nondegenerateB (nondege: nondegenerate (alternatingform B) ) : (SubK B) = (C B) := by
+theorem center_is_K_of_nondegenerateB [hnd: NonDegenerate (alternatingform B) ] : (SubK B) = (C B) := by
+  have nondege : isNonDegenerate (alternatingform B) := NonDegenerate.isNonDegenerate _
   ext x
   constructor
   apply centralextension
@@ -195,7 +203,7 @@ theorem center_is_K_of_nondegenerateB (nondege: nondegenerate (alternatingform B
   rw [Subgroup.mem_center_iff] at h
   simp_rw [mul_def] at h
   simp [add_comm] at h
-  simp [nondegenerate , alternatingform] at nondege
+  simp [isNonDegenerate, alternatingform] at nondege
   specialize nondege x.1
   exact nondege (by convert h using 1; simp [sub_eq_zero] ; tauto)
 
@@ -207,7 +215,8 @@ section Pseudo_Symplectic_Group
 
 variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V] [Module K V]
 
-variable (B : V → V → K ) (nondegenerate_symplectic_form : nondegenerate (alternatingform B))
+variable (B : V → V → K ) [hnd : NonDegenerate (alternatingform B)]
+--(nondegenerate_symplectic_form : nondegenerate (alternatingform B))
 
 open Function
 
@@ -233,6 +242,7 @@ preserveB : ∀ w v, B (σ w) (σ v) - B w v = B (σ v) (σ w) - B v w
 linear : ∀ w v, σ (w +  v) = σ w + σ v
 slinear : ∀ (r : K) w, σ (r • w) = r • σ w
 
+omit hnd in
 lemma sym_auto_comp (σ₁ σ₂ : symplectic_automorphism B) : ∀ w v, B ((σ₁.1 ∘ σ₂.1) w) ((σ₁.1 ∘ σ₂.1) v) - B w v = B ((σ₁.1 ∘ σ₂.1) v) ((σ₁.1 ∘ σ₂.1) w) - B v w := by
   intro w v
   simp [Function.comp]
@@ -240,11 +250,12 @@ lemma sym_auto_comp (σ₁ σ₂ : symplectic_automorphism B) : ∀ w v, B ((σ�
   have h₂ : B (σ₂.1 w) (σ₂.1 v) - B w v = B (σ₂.1 v) (σ₂.1 w) - B v w := σ₂.preserveB w v
   linear_combination h₁ + h₂
 
-
+omit hnd in
 lemma comp_linear (σ₁ σ₂ : symplectic_automorphism B) : ∀ w v, (σ₁.1 ∘ σ₂.1) (w + v) = (σ₁.1 ∘ σ₂.1) w + (σ₁.1 ∘ σ₂.1) v := by
   intro w v
   simp [Function.comp, σ₂.4, σ₁.4]
 
+omit hnd in
 lemma comp_slinear (σ₁ σ₂ : symplectic_automorphism B) : ∀ (r : K) v, (σ₁.1 ∘ σ₂.1) (r • v) = r • ((σ₁.1 ∘ σ₂.1) v) := by
   intro r v
   simp [Function.comp, σ₂.5, σ₁.5]
@@ -253,8 +264,9 @@ lemma comp_slinear (σ₁ σ₂ : symplectic_automorphism B) : ∀ (r : K) v, (�
 instance : HMul (symplectic_automorphism B)  (symplectic_automorphism B) (symplectic_automorphism B) where
   hMul := fun σ₁ σ₂ =>  ⟨σ₁.1 ∘  σ₂.1, Bijective.comp σ₁.2 σ₂.2, sym_auto_comp B σ₁ σ₂, comp_linear B σ₁ σ₂, comp_slinear B σ₁ σ₂⟩
 
-
+omit hnd in
 lemma  mul_def (a b : symplectic_automorphism B) : a * b = ⟨a.1 ∘ b.1, Bijective.comp a.2 b.2 ,sym_auto_comp B a b, comp_linear B a b, comp_slinear B a b⟩:= rfl
+
 
 
 instance instSemigroup : Semigroup (symplectic_automorphism B) where
@@ -264,7 +276,7 @@ instance instSemigroup : Semigroup (symplectic_automorphism B) where
     simp [mul_def]
     rfl
 
-
+omit hnd in
 lemma sym_auto_inv (σ : symplectic_automorphism B) : ∀ w v, B (invFun σ.1  w) (invFun σ.1 v) - B w v = B (invFun σ.1 v) (invFun σ.1 w) - B v w := by
    intro w v
    have h : B (σ.1 (invFun σ.1 w)) (σ.1 (invFun σ.1 v)) - B (invFun σ.1  w) (invFun σ.1 v) = B (σ.1 (invFun σ.1 v)) (σ.1 (invFun σ.1 w)) - B (invFun σ.1 v) (invFun σ.1 w):= by rw [σ.preserveB]
@@ -278,6 +290,7 @@ lemma inv_bijective (σ : V → V) (h : Bijective σ ) : Bijective (invFun σ) :
   · exact RightInverse.leftInverse (rightInverse_invFun h.2)
   · exact LeftInverse.rightInverse (leftInverse_invFun h.1)
 
+omit hnd in
 lemma inv_linear (σ : symplectic_automorphism B) : ∀ w v, invFun σ.1 (w + v) = invFun σ.1 w + invFun σ.1 v := by
   intro w v
   have h : σ.1 (invFun σ.1 ( w + v)) = σ.1 ((invFun σ.1 w) +  (invFun σ.1 v) ):= by
@@ -286,6 +299,7 @@ lemma inv_linear (σ : symplectic_automorphism B) : ∀ w v, invFun σ.1 (w + v)
   apply σ.bijective.1 at h
   exact h
 
+omit hnd in
 lemma inv_slinear (σ : symplectic_automorphism B) : ∀ (r : K) v,  invFun σ.1 (r • v) = r • ((invFun σ.1) v) := by
   intro r v
   have h : σ.1 (invFun σ.1 ( r • v)) = σ.1 (r • (invFun σ.1 v) ):= by
@@ -297,12 +311,13 @@ lemma inv_slinear (σ : symplectic_automorphism B) : ∀ (r : K) v,  invFun σ.1
 noncomputable instance  instInv: Inv  ( symplectic_automorphism B) where
    inv := fun a => ⟨invFun a.1, inv_bijective a.1 a.2, sym_auto_inv B a, inv_linear B a, inv_slinear B a⟩
 
+omit hnd in
 lemma inv_def (a : symplectic_automorphism B) : a⁻¹ =  ⟨invFun a.1, inv_bijective a.1 a.2, sym_auto_inv B a,  inv_linear B a, inv_slinear B a⟩ := by rfl
 
 instance hasOne: One (symplectic_automorphism B)  where
   one := ⟨id, Function.bijective_id, by simp, by simp, by simp⟩
 
-@[simp]
+omit hnd in @[simp]
 lemma One_def : (1 : symplectic_automorphism B) = ⟨id, Function.bijective_id, by simp, by simp, by simp⟩  := rfl
 
 
@@ -385,6 +400,7 @@ lemma add_quadraticform (f : V → K ) (g : V → K) (h1 : Quadraticform f) (h2 
       _ = t^2 * f v + t^2 * g v := by rw [h1.2, h2.2]
       _ = t^2 * (f (v) + g (v)) := by ring
 
+omit hnd in
 lemma comp_quadraricform (f : V → K) (σ : symplectic_automorphism B) (h : Quadraticform f) : Quadraticform (f ∘ (σ.1)) := by
   constructor
   · constructor
@@ -407,6 +423,7 @@ lemma comp_quadraricform (f : V → K) (σ : symplectic_automorphism B) (h : Qua
       _ = f (t • (σ.1  v)) := by simp [σ.5]
       _ = t^2 * f (σ.1 v):= by rw [h.2]
       _ = t^2 * ((f ∘ σ.1) (v)) := by simp
+
 
 lemma comp_associatedB  (a b : pseudo_symgrp B) : ∀ w v, form (b.2 + a.2 ∘ b.1.1) w v = B ((a.1 * b.1).1 w) ((a.1 * b.1).1 v) - B w v := by
   intro w v
@@ -433,6 +450,7 @@ instance instSemigroup : Semigroup (pseudo_symgrp B) where
       ext x
       simp [add_assoc]
 
+omit hnd in
 lemma inv_quadratic (a : pseudo_symgrp B) : Quadraticform ((- a.2) ∘ (invFun (a.1.1))) := by
   constructor
   · constructor
@@ -449,6 +467,7 @@ lemma inv_quadratic (a : pseudo_symgrp B) : Quadraticform ((- a.2) ∘ (invFun (
   · intro t v
     simp [inv_slinear, a.3.sq_smul]
 
+omit hnd in
 lemma inv_associatedB (a : pseudo_symgrp B) : ∀ w v, form ( (- a.2) ∘ (invFun (a.1.1))) w v = B (invFun a.1.1 w) (invFun a.1.1 v) - B w v := by
   intro w v
   simp [form, inv_linear]
@@ -460,6 +479,7 @@ lemma inv_associatedB (a : pseudo_symgrp B) : ∀ w v, form ( (- a.2) ∘ (invFu
 noncomputable instance  instInv: Inv  (pseudo_symgrp B) where
    inv := fun a => ⟨a.1⁻¹ , (- a.2) ∘ (invFun (a.1.1)) , inv_quadratic B a, inv_associatedB B a⟩
 
+omit hnd in
 lemma inv_def (a : pseudo_symgrp B) : a⁻¹ =  ⟨a.1⁻¹ , (- a.2) ∘ (invFun (a.1.1)) , inv_quadratic B a, inv_associatedB B a⟩:= by rfl
 
 lemma one_quadraticform : Quadraticform (0 : V → K) := by
@@ -472,6 +492,7 @@ lemma one_quadraticform : Quadraticform (0 : V → K) := by
   · intro t v
     simp
 
+omit hnd in
 lemma one_associatedB : ∀ w v, form 0 w v = B ((1 : symplectic_automorphism B).1 w) ((1 : symplectic_automorphism B).1 v) - B w v := by
   intro w v
   simp [form]
@@ -479,7 +500,7 @@ lemma one_associatedB : ∀ w v, form 0 w v = B ((1 : symplectic_automorphism B)
 instance hasOne: One (pseudo_symgrp B)  where
   one := ⟨(1 : symplectic_automorphism B), 0, one_quadraticform, one_associatedB B⟩
 
-@[simp]
+omit hnd in @[simp]
 lemma One_def : (1 : pseudo_symgrp B) = ⟨(1 : symplectic_automorphism B), 0, one_quadraticform, one_associatedB B⟩ := rfl
 
 
