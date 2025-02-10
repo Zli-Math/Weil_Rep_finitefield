@@ -1,7 +1,4 @@
 import Mathlib
-import Mathlib.Algebra.Module.Pi
-import Mathlib.Algebra.BigOperators.Ring
-import Mathlib.Data.Real.Basic
 
 section HeisenbergGroup
 
@@ -110,14 +107,12 @@ local notation "KK" => (ZMod 2)
 
 abbrev BB : VV → VV → KK := fun a b => a * b
 
-
 abbrev a : Heisenberg (BB) := ⟨1,0⟩
 
 example : a * a = ⟨0,1⟩ := by
   simp [Heisenberg.mul_def]
   ring_nf
   apply FiniteField.cast_card_eq_zero
-
 end Eg
 
 
@@ -238,7 +233,6 @@ bijective : Bijective σ
 preserveB : ∀ w v, B (σ w) (σ v) - B w v = B (σ v) (σ w) - B v w
 
 
-omit [AddCommGroup V] in
 lemma sym_auto_comp (σ₁ σ₂ : symplectic_automorphism B) : ∀ w v, B ((σ₁.1 ∘ σ₂.1) w) ((σ₁.1 ∘ σ₂.1) v) - B w v = B ((σ₁.1 ∘ σ₂.1) v) ((σ₁.1 ∘ σ₂.1) w) - B v w := by
   intro w v
   simp [Function.comp]
@@ -281,7 +275,6 @@ lemma inv_def (a : symplectic_automorphism B) : a⁻¹ =  ⟨invFun a.1, inv_bij
 instance hasOne: One (symplectic_automorphism B)  where
   one := ⟨id, Function.bijective_id, by simp⟩
 
-omit [AddCommGroup V] in
 @[simp]
 lemma One_def : (1 : symplectic_automorphism B) = ⟨id, Function.bijective_id, by simp⟩  := rfl
 
