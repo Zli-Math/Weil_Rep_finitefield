@@ -149,9 +149,15 @@ additive : ∀ a b , f (a+b) = f (a) + f (b)
 
 variable (f : V → K )[Quadraticform f]
 
-def nondegenerate (B : V → V → K) := ∀ v , (∀ w , B v w =0) → v = 0
 
-#check nondegenerate B
+class NonDegenerate (B : V → V → K) where
+  nondeg : ∀ v , (∀ w , B v w =0) → v = 0
+
+def isNonDegenerate (B : V → V → K) := ∀ v , (∀ w , B v w =0) → v = 0
+
+omit [Module K V] in
+lemma NonDegenerate.isNonDegenerate (B : V → V → K) [h : NonDegenerate B] : isNonDegenerate B := h.nondeg
+
 
 def alternatingform (B : V → V → K) : (V → V → K )  := fun v => (fun w => B v w - B w v)
 
