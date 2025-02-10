@@ -148,6 +148,7 @@ variable (f : V → K )[Quadraticform f]
 class NonDegenerate (B : V → V → K) where
   nondeg : ∀ v , (∀ w , B v w =0) → v = 0
 
+
 def isNonDegenerate (B : V → V → K) := ∀ v , (∀ w , B v w =0) → v = 0
 
 omit [Module K V] in
@@ -188,7 +189,8 @@ theorem centralextension : (SubK B).carrier ⊆ (C B).carrier := by
 --Subgroup.subgroupOf
 
 omit [Module K V] in
-theorem center_is_K_of_nondegenerateB (nondege: nondegenerate (alternatingform B) ) : (SubK B) = (C B) := by
+theorem center_is_K_of_nondegenerateB [hnd: NonDegenerate (alternatingform B) ] : (SubK B) = (C B) := by
+  have nondege : isNonDegenerate (alternatingform B) := NonDegenerate.isNonDegenerate _
   ext x
   constructor
   apply centralextension
@@ -197,7 +199,7 @@ theorem center_is_K_of_nondegenerateB (nondege: nondegenerate (alternatingform B
   rw [Subgroup.mem_center_iff] at h
   simp_rw [mul_def] at h
   simp [add_comm] at h
-  simp [nondegenerate , alternatingform] at nondege
+  simp [isNonDegenerate, alternatingform] at nondege
   specialize nondege x.1
   exact nondege (by convert h using 1; simp [sub_eq_zero] ; tauto)
 
@@ -208,7 +210,8 @@ section Pseudo_Symplectic_Group
 
 variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V]
 
-variable (B : V → V → K ) (nondegenerate_symplectic_form : nondegenerate (alternatingform B))
+variable (B : V → V → K ) [hnd : NonDegenerate (alternatingform B)]
+--(nondegenerate_symplectic_form : nondegenerate (alternatingform B))
 
 open Function
 
@@ -243,7 +246,6 @@ lemma sym_auto_comp (σ₁ σ₂ : symplectic_automorphism B) : ∀ w v, B ((σ�
 instance : HMul (symplectic_automorphism B)  (symplectic_automorphism B) (symplectic_automorphism B) where
   hMul := fun σ₁ σ₂ =>  ⟨σ₁.1 ∘  σ₂.1, Bijective.comp σ₁.2 σ₂.2, sym_auto_comp B σ₁ σ₂⟩
 
-omit [AddCommGroup V] in
 lemma  mul_def (a b : symplectic_automorphism B) : a * b = ⟨a.1 ∘ b.1, Bijective.comp a.2 b.2 ,sym_auto_comp B a b⟩:= rfl
 
 
@@ -304,15 +306,6 @@ noncomputable instance instGroup : Group (symplectic_automorphism B) where
     apply Function.invFun_comp a.2.1
 
 end symplectic
-
-
-
-
-
-
-
-
-
 
 
 
