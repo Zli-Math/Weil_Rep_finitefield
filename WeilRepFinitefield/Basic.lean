@@ -424,7 +424,7 @@ lemma comp_quadraricform (f : V → K) (σ : symplectic_automorphism B) (h : Qua
       _ = t^2 * f (σ.1 v):= by rw [h.2]
       _ = t^2 * ((f ∘ σ.1) (v)) := by simp
 
-
+omit hnd in
 lemma comp_associatedB  (a b : pseudo_symgrp B) : ∀ w v, form (b.2 + a.2 ∘ b.1.1) w v = B ((a.1 * b.1).1 w) ((a.1 * b.1).1 v) - B w v := by
   intro w v
   simp [form, symplectic.mul_def]
@@ -437,6 +437,7 @@ lemma comp_associatedB  (a b : pseudo_symgrp B) : ∀ w v, form (b.2 + a.2 ∘ b
 instance : HMul (pseudo_symgrp B)  (pseudo_symgrp B) (pseudo_symgrp B) where
   hMul := fun a b =>  ⟨a.1 * b.1, b.2 + a.2 ∘ b.1.1, add_quadraticform (b.2) (a.2 ∘ b.1.1) (b.3) (comp_quadraricform B a.2 b.1 a.3), comp_associatedB B a b⟩
 
+omit hnd in
 lemma  mul_def (a b : pseudo_symgrp B) : a * b = ⟨a.1 * b.1, b.2 + a.2 ∘ b.1.1, add_quadraticform (b.2) (a.2 ∘ b.1.1) (b.3) (comp_quadraricform B a.2 b.1 a.3), comp_associatedB B a b⟩:= rfl
 
 instance instSemigroup : Semigroup (pseudo_symgrp B) where
@@ -541,17 +542,77 @@ section Schrodinger_Model_of_Heisenberg_Representation
 
 open Heisenberg symplectic pseudo_symplectic Function
 
+variable {K : Type } [Field K] [Fintype K] {V : Type } [AddCommGroup V] [Module K V] [FiniteDimensional K V] (B : V → V → K) [IsBilinear B]
 
-variable {K : Type*} [Field K] [Fintype K] {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
+local notation "B_s" => (alternatingform B)
 
-variable (X Y : Submodule K V)(n := Module.finrank K X)
+structure polarzation (X Y: Submodule K V) where
+dimX : Module.finrank K X * 2 = Module.finrank K V
+dualXY : Y ≃ₗ[K] Module.Dual K X
+mul_zero : ∀ x : X, ∀ y : Y,  B_s x.1 y.1 = 0
 
-abbrev HX := X × K
+structure addcharacter (K : Type) [AddGroup K]  where
+f : K → ℂˣ
+mul : ∀ a b , f (a + b) = f a * f b
+
+structure mulcharacter (K : Type) [Group K]  where
+f : K → ℂˣ
+mul : ∀ a b , f (a * b) = f a * f b
+
+--χ₀ takes values in {1, -1}
+variable {X Y : Submodule K V} (χ₀ : addcharacter K) (hp : polarzation B X Y)
+
+def subXK : @Subgroup (Heisenberg B) (Heisenberg.instGroup B) where
+  carrier := by
+    simp [Heisenberg]
+    exact Set.prod X.carrier Set.univ
+  mul_mem' := by
+    intro x y h1 h2
+    simp_all [Heisenberg.mul_def]
+    constructor
+    · rw [Set.prod] at h1 h2
+      rw [Set.mem_def] at h1 h2
+      simp [X.add_mem]
+      exact Submodule.add_mem X h1.1 h2.1
+    · simp
+  one_mem' := by simp [Set.prod]
+  inv_mem' := by
+    intro x h
+    simp [Set.prod, Heisenberg.inv_def]
+    exact h.1
 
 
+structure extendcharacter (χ : mulcharacter (subXK B (X := X)) ) where
+equalχ₀ : ∀ y, χ.f ⟨(0, y), by simp [subXK, Set.prod]⟩ = χ₀.f y
+--χ takes values in {1, -1, i, -i}
 
+variable (χ : mulcharacter (subXK B (X := X))) (isextendchara : extendcharacter B χ₀ χ)(x : X)
 
+def Schrodinger_model := {f :Heisenberg B → ℂ | ∀ h : Heisenberg B, ∀ x: subXK B (X := X) ,f (h * x) = (χ.f x)⁻¹ * f (h)}
 
+lemma Sch_add_mem (h1 : f1 ∈  Schrodinger_model B χ) (h2 : f2 ∈ Schrodinger_model B χ): f1 + f2 ∈ Schrodinger_model B χ := by
+  simp [Schrodinger_model]
+  sorry
+
+lemma Sch_zero_mem : 0 ∈ Schrodinger_model B χ := by sorry
+
+lemma Sch_smul_mem (r : ℂ ) (f : Heisenberg B → ℂ): f ∈  Schrodinger_model B χ → r • f ∈  Schrodinger_model B χ := by sorry
+
+noncomputable instance : Submodule ℂ (Heisenberg B → ℂ) where
+  carrier := Schrodinger_model B χ
+  add_mem' := Sch_add_mem B χ
+  zero_mem' := Sch_zero_mem B χ
+  smul_mem' := Sch_smul_mem B χ
+
+noncomputable instance : AddCommMonoid (Schrodinger_model B χ) := Submodule.addCommMonoid (instSubmoduleComplexForallHeisenberg B χ)
+
+noncomputable instance : Module ℂ (Schrodinger_model B χ) := Submodule.module (instSubmoduleComplexForallHeisenberg B χ)
+
+noncomputable instance : Ring  (Module.End ℂ (Schrodinger_model B χ)):= sorry
+
+structure unitary_rep (ϕ : Schrodinger_model B χ) where
+element : Heisenberg B → Module.End ℂ (Schrodinger_model B χ)
+equation : ∀ h₁ h₂, (element (h₁) (ϕ)).1 (h₂) = ϕ.1 (h₁⁻¹ * h₂)
 
 
 
