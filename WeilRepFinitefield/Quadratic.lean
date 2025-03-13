@@ -46,7 +46,7 @@ def alternatingform (B : V → V → K) : (V → V → K )  := fun v => (fun w =
 
 abbrev C : Subgroup (Heisenberg B) := Subgroup.center _
 
-instance SubK : Subgroup (Heisenberg B) where
+abbrev SubK : Subgroup (Heisenberg B) where
   carrier := { a | a.1 = 0 }
   mul_mem' := by
     intro a b ha hb

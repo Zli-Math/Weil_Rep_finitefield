@@ -1,9 +1,9 @@
 import Mathlib
-import WeilRepFinitefield.PseudoSymplecticGroup
+import WeilRepFinitefield.Quadratic
 
 noncomputable section Schrodinger_Model_of_Heisenberg_Representation
 
-open Heisenberg symplectic pseudo_symplectic Function
+open Heisenberg Function
 
 variable {K : Type } [Field K] [Fintype K] {V : Type } [AddCommGroup V] [Module K V] [FiniteDimensional K V] (B : V → V → K) [IsBilinear B]
 
@@ -76,16 +76,21 @@ abbrev rho_aux (h : Heisenberg B) : Module.End ℂ (Schrodinger_model B χ)
   map_add' := sorry
   map_smul' := sorry
 
+
+
 def rho : Heisenberg B  →* Module.End ℂ (Schrodinger_model B χ) where
   toFun := rho_aux B χ
   map_one' := sorry
   map_mul' := sorry
 
-variable (Y) in
-abbrev Ymodel := Y → ℂ
+-- The GeneralLinearGroup packet in mathlib is not good, so choose not to define it as linearEquiv
+--def rho : Heisenberg B  →* LinearMap.GeneralLinearGroup ℂ (Schrodinger_model B χ):= MonoidHom.toHomUnits (rho_aux1 B χ)
 
 variable {B} in
-def homY (hp : polarization B X Y) : (Schrodinger_model B χ) ≃ₗ[ℂ] (Ymodel Y) where
+abbrev Ymodel (hp: polarization B X Y):= Y → ℂ
+
+variable {B} in
+def homY (hp : polarization B X Y) : (Schrodinger_model B χ) ≃ₗ[ℂ] (Ymodel hp) where
   toFun := fun f => (fun y => f.1 y)
   map_add' := sorry
   map_smul' := sorry
@@ -94,14 +99,13 @@ def homY (hp : polarization B X Y) : (Schrodinger_model B χ) ≃ₗ[ℂ] (Ymode
   right_inv := sorry
 
 variable {B} in
-def rhoY : Heisenberg B →* Module.End ℂ (Ymodel Y) where
+def rhoY : Heisenberg B →* Module.End ℂ (Ymodel hp) where
   toFun :=   (LinearEquiv.conj (homY χ hp)) ∘ (rho B χ)
   map_one' := sorry
   map_mul' := sorry
 
 -- Lemma 2.3 correct the expression on RHS
-lemma rhoY.eq (x : X) (y y': Y) (t:K): (rhoY hp χ) ⟨x+y,t⟩  f y'=  χ ⟨⟨x,t⟩,by sorry⟩ * f (y' - y):= by sorry
-
+lemma rhoY.eq (x : X) (y y': Y) (t:K) (f : Ymodel hp) : (rhoY hp χ) (⟨x+y,t⟩: Heisenberg B) f y'=  χ ⟨⟨x,t⟩,by sorry⟩ * f (y' - y):= by sorry
 
 
 

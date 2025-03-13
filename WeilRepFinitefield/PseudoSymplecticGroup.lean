@@ -5,7 +5,7 @@ section Pseudo_Symplectic_Group
 
 variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V] [Module K V]
 
-variable (B : V → V → K ) [hnd : NonDegenerate (alternatingform B)]
+variable (B : V → V → K ) --[hnd : NonDegenerate (alternatingform B)]
 --(nondegenerate_symplectic_form : nondegenerate (alternatingform B))
 
 open Function
@@ -21,137 +21,138 @@ form := B_s
 variable (V_s: symplectic_space B)
 
 
---Symplectic group Sp(V)
-namespace symplectic
-
 @[ext]
-structure symplectic_automorphism where
-σ : V → V
-bijective : Bijective σ
+structure Sp where
+σ : V ≃ₗ[K] V
 preserveB : ∀ w v, B (σ w) (σ v) - B w v = B (σ v) (σ w) - B v w
-linear : ∀ w v, σ (w +  v) = σ w + σ v
-slinear : ∀ (r : K) w, σ (r • w) = r • σ w
 
-omit hnd in
-lemma sym_auto_comp (σ₁ σ₂ : symplectic_automorphism B) : ∀ w v, B ((σ₁.1 ∘ σ₂.1) w) ((σ₁.1 ∘ σ₂.1) v) - B w v = B ((σ₁.1 ∘ σ₂.1) v) ((σ₁.1 ∘ σ₂.1) w) - B v w := by
+namespace Sp
+
+
+
+instance Sp_funlike : FunLike (Sp B) V V where
+  coe := fun s => s.σ
+  coe_injective' := by intro a b h; ext; simp [h]
+
+
+
+variable (σ : Sp B)
+lemma coe_map : σ.σ v  = σ v := rfl
+
+
+lemma preserveB' : ∀ w v, B (σ w) (σ  v) - B w v = B (σ v) (σ w) - B v w := σ.preserveB
+
+variable {B} in
+lemma linear : ∀ w v, σ (w +  v) = σ w + σ v := by
+  intro w v; rw [DFunLike.coe,Sp_funlike]
+  simp only [map_add]
+
+variable {B} in
+lemma slinear : ∀ (r : K) w, σ (r • w) = r • σ w := by
+  intro r w
+  rw [DFunLike.coe,Sp_funlike]
+  simp only [map_smul]
+
+
+lemma sym_auto_comp (σ₁ σ₂ : Sp B) : ∀ w v, B ((σ₁ ∘ σ₂) w) ((σ₁ ∘ σ₂) v) - B w v = B ((σ₁ ∘ σ₂) v) ((σ₁ ∘ σ₂) w) - B v w := by
   intro w v
   simp [Function.comp]
-  have h₁ : B (σ₁.1 (σ₂.1 w)) (σ₁.1 (σ₂.1 v)) - B (σ₂.1 w) (σ₂.1 v) = B (σ₁.1 (σ₂.1 v)) (σ₁.1 (σ₂.1 w)) - B (σ₂.1 v) (σ₂.1 w) := σ₁.preserveB (σ₂.1 w) (σ₂.1 v)
-  have h₂ : B (σ₂.1 w) (σ₂.1 v) - B w v = B (σ₂.1 v) (σ₂.1 w) - B v w := σ₂.preserveB w v
+  have h₁ : B (σ₁ (σ₂ w)) (σ₁.1 (σ₂ v)) - B (σ₂ w) (σ₂ v) = B (σ₁ (σ₂ v)) (σ₁ (σ₂ w)) - B (σ₂ v) (σ₂ w) := σ₁.preserveB (σ₂ w) (σ₂ v)
+  have h₂ : B (σ₂ w) (σ₂ v) - B w v = B (σ₂ v) (σ₂ w) - B v w := σ₂.preserveB w v
   linear_combination h₁ + h₂
 
-omit hnd in
-lemma comp_linear (σ₁ σ₂ : symplectic_automorphism B) : ∀ w v, (σ₁.1 ∘ σ₂.1) (w + v) = (σ₁.1 ∘ σ₂.1) w + (σ₁.1 ∘ σ₂.1) v := by
-  intro w v
-  simp [Function.comp, σ₂.4, σ₁.4]
+instance : HMul (Sp B)  (Sp B) (Sp B) where
+  hMul := fun a b =>  ⟨b.σ.trans a.σ, sym_auto_comp B _ _ ⟩
 
-omit hnd in
-lemma comp_slinear (σ₁ σ₂ : symplectic_automorphism B) : ∀ (r : K) v, (σ₁.1 ∘ σ₂.1) (r • v) = r • ((σ₁.1 ∘ σ₂.1) v) := by
-  intro r v
-  simp [Function.comp, σ₂.5, σ₁.5]
+variable (a b : Sp B)
+--omit hnd in
+lemma  mul_def : a * b = ⟨b.1.trans a.1, sym_auto_comp B _ _⟩:= rfl
 
 
-instance : HMul (symplectic_automorphism B)  (symplectic_automorphism B) (symplectic_automorphism B) where
-  hMul := fun σ₁ σ₂ =>  ⟨σ₁.1 ∘  σ₂.1, Bijective.comp σ₁.2 σ₂.2, sym_auto_comp B σ₁ σ₂, comp_linear B σ₁ σ₂, comp_slinear B σ₁ σ₂⟩
+@[simp]
+lemma map_mul (a b : Sp B) (v : V): (a * b) v = a ( b v ) := by
+  rw [mul_def]
+  calc
+  _ = (b.σ.trans a.σ ) v := by rfl
 
-omit hnd in
-lemma  mul_def (a b : symplectic_automorphism B) : a * b = ⟨a.1 ∘ b.1, Bijective.comp a.2 b.2 ,sym_auto_comp B a b, comp_linear B a b, comp_slinear B a b⟩:= rfl
 
-
-
-instance instSemigroup : Semigroup (symplectic_automorphism B) where
+instance instSemigroup : Semigroup (Sp B) where
   mul := HMul.hMul
   mul_assoc := by
     intro a b c
     simp [mul_def]
     rfl
 
-omit hnd in
-lemma sym_auto_inv (σ : symplectic_automorphism B) : ∀ w v, B (invFun σ.1  w) (invFun σ.1 v) - B w v = B (invFun σ.1 v) (invFun σ.1 w) - B v w := by
-   intro w v
-   have h : B (σ.1 (invFun σ.1 w)) (σ.1 (invFun σ.1 v)) - B (invFun σ.1  w) (invFun σ.1 v) = B (σ.1 (invFun σ.1 v)) (σ.1 (invFun σ.1 w)) - B (invFun σ.1 v) (invFun σ.1 w):= by rw [σ.preserveB]
-   rw [invFun_eq (σ.bijective.2 w), invFun_eq (σ.bijective.2 v)] at h
-   linear_combination -h
+instance hasOne: One (Sp B)  where
+  one := ⟨1, by simp⟩
 
-lemma inv_bijective (σ : V → V) (h : Bijective σ ) : Bijective (invFun σ) := by
-  apply bijective_iff_has_inverse.2
-  use σ
-  constructor
-  · exact RightInverse.leftInverse (rightInverse_invFun h.2)
-  · exact LeftInverse.rightInverse (leftInverse_invFun h.1)
+lemma One_def : (1 : Sp B) = ⟨1,by simp⟩  := rfl
 
-omit hnd in
-lemma inv_linear (σ : symplectic_automorphism B) : ∀ w v, invFun σ.1 (w + v) = invFun σ.1 w + invFun σ.1 v := by
-  intro w v
-  have h : σ.1 (invFun σ.1 ( w + v)) = σ.1 ((invFun σ.1 w) +  (invFun σ.1 v) ):= by
-    rw [σ.linear]
-    rw [invFun_eq (σ.bijective.2 (w + v)), invFun_eq (σ.bijective.2 w), invFun_eq (σ.bijective.2 v)]
-  apply σ.bijective.1 at h
-  exact h
+@[simp]
+lemma map_one (v : V): (1 : Sp B) v = v := by rfl
 
-omit hnd in
-lemma inv_slinear (σ : symplectic_automorphism B) : ∀ (r : K) v,  invFun σ.1 (r • v) = r • ((invFun σ.1) v) := by
-  intro r v
-  have h : σ.1 (invFun σ.1 ( r • v)) = σ.1 (r • (invFun σ.1 v) ):= by
-    rw [σ.slinear]
-    rw [invFun_eq (σ.bijective.2 (r • v)), invFun_eq (σ.bijective.2 v)]
-  apply σ.bijective.1 at h
-  exact h
-
-noncomputable instance  instInv: Inv  ( symplectic_automorphism B) where
-   inv := fun a => ⟨invFun a.1, inv_bijective a.1 a.2, sym_auto_inv B a, inv_linear B a, inv_slinear B a⟩
-
-omit hnd in
-lemma inv_def (a : symplectic_automorphism B) : a⁻¹ =  ⟨invFun a.1, inv_bijective a.1 a.2, sym_auto_inv B a,  inv_linear B a, inv_slinear B a⟩ := by rfl
-
-instance hasOne: One (symplectic_automorphism B)  where
-  one := ⟨id, Function.bijective_id, by simp, by simp, by simp⟩
-
-omit hnd in @[simp]
-lemma One_def : (1 : symplectic_automorphism B) = ⟨id, Function.bijective_id, by simp, by simp, by simp⟩  := rfl
-
-
-
-instance instMulOneClass : MulOneClass (symplectic_automorphism B) where
+instance instMulOneClass : MulOneClass (Sp B) where
   one_mul := by
     intro a
     simp [mul_def]
-
+    aesop
   mul_one := by
     intro a
     simp [mul_def]
+    aesop
 
 
-instance instMonoid : Monoid (symplectic_automorphism B) where
+instance instMonoid : Monoid (Sp B) where
   one_mul := one_mul
   mul_one := mul_one
   npow := npowRecAuto
   npow_zero := by intros; rfl
   npow_succ := by intros; rfl
 
-noncomputable instance instGroup : Group (symplectic_automorphism B) where
+variable {B} in
+lemma inv_aux : ∀ w v, B (σ.1.symm w) (σ.1.symm v) - B w v = B (σ.1.symm v) (σ.1.symm w) - B v w := by
+    intro w v
+    have fun_inv_fun  : ∀ v, σ.σ (σ.1.symm v)  = v
+    := by simp
+    have h : B (σ.1 (σ.1.symm w)) (σ.1 (σ.1.symm v)) - B (σ.1.symm w) (σ.1.symm v) = B (σ.1 (σ.1.symm v)) (σ.1 (σ.1.symm w)) - B (σ.1.symm v) (σ.1.symm w):= by simp only [σ.preserveB]
+    repeat rw [fun_inv_fun] at h
+    linear_combination -h
+
+
+instance instGroup : Group (Sp B) where
+  inv := fun σ=> ⟨σ.1.symm, inv_aux σ⟩
   inv_mul_cancel := by
     intro a
-    simp [inv_def, mul_def]
-    apply Function.invFun_comp a.2.1
+    ext v
+    calc
+    _ = a.σ.symm (a.σ v) := by simp [mul_def]
+    _ = _ := by rw [One_def];simp only [LinearEquiv.symm_apply_apply,
+      LinearEquiv.coe_one, id_eq]
 
-end symplectic
+lemma inv_def: σ⁻¹ = ⟨σ.1.symm, inv_aux σ⟩ := rfl
 
+@[simp]
+lemma self_of_map_inv_self : σ⁻¹ (σ v) = v := by
+  simp only [← map_mul, inv_mul_cancel, map_one]
 
+@[simp]
+lemma self_of_map_self_inv : σ (σ⁻¹ v) = v := by
+  simp only [← map_mul, mul_inv_cancel, map_one]
 
---pseudo_symplectic_group
+end Sp
+
 namespace pseudo_symplectic
 
-open Heisenberg Function symplectic
+open Heisenberg Function Sp
 
 variable (f : V → K)
 
 @[ext]
-structure pseudo_symgrp where
-σ : symplectic_automorphism B
+structure Ps where
+σ : Sp B
 f : V → K
 Quaf : Quadraticform f
-associatedB : ∀ w v, form f w v = B (σ.1 w) (σ.1 v) - B w v
+associatedB : ∀ w v, form f w v = B (σ w) (σ v) - B w v
 
 lemma add_quadraticform (f : V → K ) (g : V → K) (h1 : Quadraticform f) (h2 : Quadraticform g) : Quadraticform (f + g) := by
   constructor
@@ -190,88 +191,96 @@ lemma add_quadraticform (f : V → K ) (g : V → K) (h1 : Quadraticform f) (h2 
       _ = t^2 * f v + t^2 * g v := by rw [h1.2, h2.2]
       _ = t^2 * (f (v) + g (v)) := by ring
 
-omit hnd in
-lemma comp_quadraricform (f : V → K) (σ : symplectic_automorphism B) (h : Quadraticform f) : Quadraticform (f ∘ (σ.1)) := by
+--omit hnd in
+lemma comp_quadraricform (f : V → K) (σ : Sp B) (h : Quadraticform f) : Quadraticform (f ∘ σ) := by
   constructor
   · constructor
     · intro r w v
       simp [form]
-      have h' : f (σ.σ (r + w + v)) - f (σ.σ (r + w)) - f (σ.σ v) = f (σ.σ r + σ.σ w + σ.σ v) - f (σ.σ r + σ.σ w) - f (σ.σ v) := by simp [σ.4]
+      have h' : f (σ.σ (r + w + v)) - f (σ.σ (r + w)) - f (σ.σ v) = f (σ.σ r + σ.σ w + σ.σ v) - f (σ.σ r + σ.σ w) - f (σ.σ v) := by simp only [map_add]
+      repeat rw [Sp.coe_map] at h'
       rw [h']
       have h'' := h.bilinear.llinear (σ.σ r) (σ.σ w) (σ.σ v)
+      repeat rw [Sp.coe_map] at h''
       simp_all [form]
-      rw [σ.4 r v, σ.4 w v]
+      rw [linear σ r v, linear σ w v]
     · intro r w v
       simp [form]
-      have h' : f (σ.σ (w + (r + v))) - f (σ.σ (w)) - f (σ.σ (r + v)) = f (σ.σ w + (σ.σ r + σ.σ v)) - f (σ.σ w) - f (σ.σ r + σ.σ v):= by simp [add_assoc, σ.4]
+      have h' : f (σ.σ (w + (r + v))) - f (σ.σ (w)) - f (σ.σ (r + v)) = f (σ.σ w + (σ.σ r + σ.σ v)) - f (σ.σ w) - f (σ.σ r + σ.σ v):= by simp [add_assoc, linear σ]
+      repeat rw [Sp.coe_map] at h'
       rw [h']
       have h'' := h.bilinear.rlinear (σ.σ r) (σ.σ w) (σ.σ v)
+      repeat rw [Sp.coe_map] at h''
       simp_all [← add_assoc, form]
-      rw [σ.4 w r, σ.4 w v]
+      rw [linear σ w r, linear σ w v]
   · intro t v
     calc
-      _ = f (t • (σ.1  v)) := by simp [σ.5]
-      _ = t^2 * f (σ.1 v):= by rw [h.2]
+      _ = f (t • (σ  v)) := by simp [slinear]
+      _ = t^2 * f (σ.1 v):= by rw [coe_map,h.2]
       _ = t^2 * ((f ∘ σ.1) (v)) := by simp
 
-omit hnd in
-lemma comp_associatedB  (a b : pseudo_symgrp B) : ∀ w v, form (b.2 + a.2 ∘ b.1.1) w v = B ((a.1 * b.1).1 w) ((a.1 * b.1).1 v) - B w v := by
+--omit hnd in
+lemma comp_associatedB  (a b : Ps B) : ∀ w v, form (b.2 + a.2 ∘ b.1.1) w v = B ((a.σ * b.σ).1 w) ((a.1 * b.1).1 v) - B w v := by
   intro w v
-  simp [form, symplectic.mul_def]
+  simp [form, Sp.mul_def]
   have h1 : b.f (w + v) - b.f w - b.f v = B (b.σ.σ w) (b.σ.σ v) - B w v := b.associatedB w v
-  have h2 : a.f (b.σ.σ (w + v)) - a.f (b.σ.σ w) - a.f (b.σ.σ v) = B (a.σ.σ (b.σ.σ w)) (a.σ.σ (b.σ.σ v)) - B (b.σ.σ w) (b.σ.σ v) := by
-    rw [b.σ.4]
+  have h2 : a.f (b.σ.σ w +  b.σ.σ v) - a.f (b.σ.σ w) - a.f (b.σ.σ v) = B (a.σ.σ (b.σ.σ w)) (a.σ.σ (b.σ.σ v)) - B (b.σ.σ w) (b.σ.σ v) := by
     exact a.associatedB (b.σ.σ w) (b.σ.σ v)
   linear_combination h1 + h2
 
-instance : HMul (pseudo_symgrp B)  (pseudo_symgrp B) (pseudo_symgrp B) where
-  hMul := fun a b =>  ⟨a.1 * b.1, b.2 + a.2 ∘ b.1.1, add_quadraticform (b.2) (a.2 ∘ b.1.1) (b.3) (comp_quadraricform B a.2 b.1 a.3), comp_associatedB B a b⟩
+instance : HMul (Ps B)  (Ps B) (Ps B) where
+  hMul := fun a b =>  ⟨a.σ * b.σ, b.f + a.f ∘ b.σ.1, add_quadraticform (b.f) (a.f ∘ b.σ.σ) (b.3) (comp_quadraricform B a.f b.σ a.3), comp_associatedB B a b⟩
 
-omit hnd in
-lemma  mul_def (a b : pseudo_symgrp B) : a * b = ⟨a.1 * b.1, b.2 + a.2 ∘ b.1.1, add_quadraticform (b.2) (a.2 ∘ b.1.1) (b.3) (comp_quadraricform B a.2 b.1 a.3), comp_associatedB B a b⟩:= rfl
+--omit hnd in
+lemma  mul_def (a b : Ps B) : a * b = ⟨a.1 * b.1, b.f + a.f ∘ b.σ.1, add_quadraticform (b.2) (a.2 ∘ b.1.1) (b.3) (comp_quadraricform B a.2 b.1 a.3), comp_associatedB B a b⟩:= rfl
 
-instance instSemigroup : Semigroup (pseudo_symgrp B) where
+instance instSemigroup : Semigroup (Ps B) where
   mul := HMul.hMul
   mul_assoc := by
     intro a b c
     simp [mul_def]
     constructor
     · rfl
-    · simp [symplectic.mul_def]
+    · simp [Sp.mul_def]
       ext x
       simp [add_assoc]
 
-omit hnd in
-lemma inv_quadratic (a : pseudo_symgrp B) : Quadraticform ((- a.2) ∘ (invFun (a.1.1))) := by
+variable {B} in
+lemma neg_comp_quadratic (σ : Sp B) {f : V → K} (h : Quadraticform f) : Quadraticform ((-f) ∘ (σ)) := by
   constructor
   · constructor
     · intro r w v
-      simp [form, inv_linear]
-      have h := a.3.bilinear.llinear (invFun a.σ.σ r) (invFun a.σ.σ w) (invFun a.σ.σ v)
-      simp [form] at h
+      simp [form]
+      --, inv_linear]
+      have h := h.bilinear.llinear (σ r) (σ w) (σ v)
+      simp [form,<-Sp.linear] at h
       linear_combination -h
     · intro r w v
-      simp [form, inv_linear]
-      have h := a.3.bilinear.rlinear (invFun a.σ.σ r) (invFun a.σ.σ w) (invFun a.σ.σ v)
-      simp [form] at h
+      simp [form]
+      have h := h.bilinear.rlinear (σ r) (σ w) (σ v)
+      simp [form,<-Sp.linear] at h
       linear_combination -h
   · intro t v
-    simp [inv_slinear, a.3.sq_smul]
+    simp [h.sq_smul,Sp.slinear]
 
-omit hnd in
-lemma inv_associatedB (a : pseudo_symgrp B) : ∀ w v, form ( (- a.2) ∘ (invFun (a.1.1))) w v = B (invFun a.1.1 w) (invFun a.1.1 v) - B w v := by
+
+
+variable {B} in
+lemma inv_associatedB (σ : Sp B) {f : V → K} (hB : ∀ w v, form f  w v = B (σ w) (σ v) - B w v ): ∀ w v, form ((-f) ∘ (σ⁻¹:Sp B)) w v = B (σ⁻¹ w) (σ⁻¹ v) - B w v := by
   intro w v
-  simp [form, inv_linear]
-  have h := a.associatedB (invFun a.σ.σ w) (invFun a.σ.σ v)
-  simp [form] at h
-  rw [invFun_eq (a.1.bijective.2 w), invFun_eq (a.1.bijective.2 v)] at h
-  linear_combination -h
+  simp [form,linear]
+  have h := hB (σ⁻¹ w) (σ⁻¹ v)
+  rw [form] at h
+  simp only [<-Sp.map_mul,mul_inv_cancel, Sp.map_one] at h
+  linear_combination - h
 
-noncomputable instance  instInv: Inv  (pseudo_symgrp B) where
-   inv := fun a => ⟨a.1⁻¹ , (- a.2) ∘ (invFun (a.1.1)) , inv_quadratic B a, inv_associatedB B a⟩
+instance  instInv: Inv  (Ps B) where
+   inv := fun a => ⟨a.σ⁻¹ , (- a.f) ∘ (a.σ⁻¹ : Sp B) , neg_comp_quadratic (a.σ⁻¹) a.Quaf, inv_associatedB a.σ a.associatedB⟩
 
-omit hnd in
-lemma inv_def (a : pseudo_symgrp B) : a⁻¹ =  ⟨a.1⁻¹ , (- a.2) ∘ (invFun (a.1.1)) , inv_quadratic B a, inv_associatedB B a⟩:= by rfl
+--omit hnd in
+lemma inv_def (a : Ps B) : a⁻¹ =
+⟨a.σ⁻¹ , (- a.f) ∘ (a.σ⁻¹ : Sp B) , neg_comp_quadratic (a.σ⁻¹) a.Quaf, inv_associatedB a.σ a.associatedB⟩ := rfl
+
 
 lemma one_quadraticform : Quadraticform (0 : V → K) := by
   constructor
@@ -283,44 +292,55 @@ lemma one_quadraticform : Quadraticform (0 : V → K) := by
   · intro t v
     simp
 
-omit hnd in
-lemma one_associatedB : ∀ w v, form 0 w v = B ((1 : symplectic_automorphism B).1 w) ((1 : symplectic_automorphism B).1 v) - B w v := by
+--omit hnd in
+lemma one_associatedB : ∀ w v, form 0 w v = B ((1 : Sp B) w) ((1 : Sp B) v) - B w v := by
   intro w v
   simp [form]
 
-instance hasOne: One (pseudo_symgrp B)  where
-  one := ⟨(1 : symplectic_automorphism B), 0, one_quadraticform, one_associatedB B⟩
-
-omit hnd in @[simp]
-lemma One_def : (1 : pseudo_symgrp B) = ⟨(1 : symplectic_automorphism B), 0, one_quadraticform, one_associatedB B⟩ := rfl
+instance hasOne: One (Ps B)  where
+  one := ⟨(1 : Sp B), 0, one_quadraticform, one_associatedB B⟩
 
 
 
-instance instMulOneClass : MulOneClass (pseudo_symgrp B) where
+@[simp]
+lemma One_def : (1 : Ps B) = ⟨(1 : Sp B), 0, one_quadraticform, one_associatedB B⟩ := rfl
+
+
+
+instance instMulOneClass : MulOneClass (Ps B) where
   one_mul := by
     intro a
-    simp [mul_def]
-    constructor
+    rw [mul_def]
+    ext v;unfold Ps.σ
+    · rw [One_def,coe_map,Sp.map_mul,Sp.map_one,Sp.coe_map]
+    · simp only [One_def, Pi.zero_comp, Pi.add_apply, Pi.zero_apply, add_zero]
   mul_one := by
     intro a
-    simp [mul_def]
-    constructor
+    rw [mul_def]
+    ext v
+    · rw [One_def,coe_map,Sp.map_mul,Sp.map_one,Sp.coe_map]
+    · simp only [One_def, Pi.add_apply, Pi.zero_apply, comp_apply, zero_add]
+      rfl
 
 
-instance instMonoid : Monoid (pseudo_symgrp B) where
+
+
+instance instMonoid : Monoid (Ps B) where
   one_mul := one_mul
   mul_one := mul_one
   npow := npowRecAuto
   npow_zero := by intros; rfl
   npow_succ := by intros; rfl
 
-noncomputable instance instGroup : Group (pseudo_symgrp B) where
+noncomputable instance instGroup : Group (Ps B) where
 inv_mul_cancel := by
   intro a
-  simp [mul_def, inv_def, comp_assoc]
-  rw [invFun_comp]
-  simp
-  exact a.1.bijective.1
+  rw [mul_def,inv_def]
+  ext v
+  · simp only [inv_mul_cancel, One_def]
+  · simp only [Pi.add_apply, comp_apply, coe_map, self_of_map_inv_self, Pi.neg_apply,
+    add_neg_cancel, One_def, Pi.zero_apply]
+
 
 end pseudo_symplectic
 
