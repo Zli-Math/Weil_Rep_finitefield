@@ -215,7 +215,6 @@ lemma add_quadraticform (f : V → K ) (g : V → K) (h1 : Quadraticform f) (h2 
       _ = t^2 * f v + t^2 * g v := by rw [h1.2, h2.2]
       _ = t^2 * (f (v) + g (v)) := by ring
 
-
 lemma comp_quadraricform (f : V → K) (σ : Sp B) (h : Quadraticform f) : Quadraticform (f ∘ σ) := by
   constructor
   · constructor
@@ -248,7 +247,6 @@ lemma comp_quadraricform (f : V → K) (σ : Sp B) (h : Quadraticform f) : Quadr
       _ = f (t • (σ  v)) := by simp [slinear]
       _ = t^2 * f (σ.1 v):= by rw [coe_map,h.2]
       _ = t^2 * ((f ∘ σ.1) (v)) := by simp
-
 
 lemma comp_associatedB  (a b : Ps B) : ∀ w v, form (b.2 + a.2 ∘ b.1.1) w v = B ((a.σ * b.σ).1 w) ((a.1 * b.1).1 v) - B w v := by
   intro w v

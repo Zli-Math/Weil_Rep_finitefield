@@ -2,7 +2,9 @@ import Mathlib
 
 section HeisenbergGroup
 
+
 variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V][Module K V]
+
 variable (B : V → V → K)
 
 

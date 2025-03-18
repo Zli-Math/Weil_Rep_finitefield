@@ -1,5 +1,4 @@
 import Mathlib
-
 import WeilRepFinitefield.HeisenbergRepresentation
 import WeilRepFinitefield.PseudoSymplecticGroup
 

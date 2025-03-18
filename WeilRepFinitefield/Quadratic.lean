@@ -61,7 +61,6 @@ abbrev SubK : Subgroup (Heisenberg B) where
 
 
 --Proposition 1.4
-
 theorem centralextension : (SubK B).carrier ⊆ (C B).carrier := by
   intro x h
   simp [SubK] at h
@@ -71,7 +70,6 @@ theorem centralextension : (SubK B).carrier ⊆ (C B).carrier := by
   repeat rw [mul_def]
   simp [add_comm , h]
 --Subgroup.subgroupOf
-
 
 theorem center_is_K_of_nondegenerateB [hnd: NonDegenerate (alternatingform B) ] : (SubK B) = (C B) := by
   have nondege : isNonDegenerate (alternatingform B) := NonDegenerate.isNonDegenerate _
