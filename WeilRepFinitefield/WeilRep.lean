@@ -133,8 +133,14 @@ lemma omega_intertwine : (ρ (s • h)) ∘ₗ  (ω s) = (ω s) ∘ₗ (ρ h) :=
     sorry
 -/
 
+variable (s₁ s₂ : Ps B)(w₁ : Ws χ₀ s₁) (w₂ : Ws χ₀ s₂)(w₁₂ : Ws χ₀ (s₁ * s₂))[Fintype (V × V)]
+
+def γ : Sp B → ℂ := sorry
+
+abbrev I := { w : V × V|  (w.1 - s₁.σ w.1) + (w.2 - s₂.σ w.2)  = w₁₂ - w₁ - w₂}
 
 
+def c := γ (s₁.σ) * γ (s₂.σ) * (γ (s₁.σ * s₂.σ))⁻¹ * (∑ ((w1, w2) ∈ (I χ₀ s₁ s₂ w₁ w₂ w₁₂)) , χ₀ (s₁.f w1 + ⟪w₁.1, w1⟫ + B (w1 - s₁.σ w1) (w₁.1 + w1) + s₂.f w2 + ⟪w₂.1, w2⟫) * χ₀ (B (w2 - s₂.σ w2) (w₂.1 + w2) + B ((w1 - s₁.σ w1) + w₁.1) ((w2 - s₂.σ w2) + w₂.1)))
 
 
 end
