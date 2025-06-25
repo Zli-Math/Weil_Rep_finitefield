@@ -21,10 +21,15 @@ class IsBilinear (B : V →  V → K) where
   rslinear: ∀ (r : K) (w v : V) , B w (r • v) = r * B w v
 
 
+
+
 namespace Heisenberg
 
 variable [bilinearB : IsBilinear B]
-
+lemma B_neg_neg (w v :V) : B w v = B (-w) (-v) := by
+  rw [← neg_one_smul K w, ← neg_one_smul K v]
+  simp only [IsBilinear.lslinear, IsBilinear.rslinear]
+  simp
 
 instance : HMul (Heisenberg B) (Heisenberg B) (Heisenberg B) where
   hMul := fun a b => ⟨ a.1 + b.1 , a.2 + b.2 + B  a.1  b.1 ⟩
