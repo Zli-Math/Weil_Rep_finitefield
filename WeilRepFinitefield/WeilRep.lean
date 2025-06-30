@@ -407,12 +407,23 @@ lemma cocycle_omega : (γ (s₁.σ) • ((Fintype.card (Ker s₁ w) : ℂ)⁻¹ 
     intro x y
     rw [smul_mul_smul_comm]
     have h1 : (rhoY hp χ) ( x + (ws χ₀ s₁)) * (rhoY hp χ) (y + (ws χ₀ s₂)) = χ₀ (B (x + (ws χ₀ s₁)) (y + (ws χ₀ s₂))) • (rhoY hp χ) ( x + y + (ws χ₀ s₁) + (ws χ₀ s₂)) := by
-
-      sorry
-    simp [h1]
-
-    sorry
+      rw [rhoY.map_mul]
+      simp [Heisenberg.mul_def]
+      rw [rhoY.eq' B χ₀ hp χ]
+      congr 2
+      simp [add_assoc]
+      simp [← add_assoc]
+      rw [add_comm]
+    rw [h1, smul_smul]
+    simp [← AddChar.map_add_eq_mul]
+    congr 2
+    simp [add_assoc]
+    have := Exists.choose_spec x.2
+    simp [this]
+    have := Exists.choose_spec y.2
+    simp [this]
   simp_rw [this]
+
 
 
 
@@ -431,18 +442,31 @@ lemma range_of_cocycle : c ∈ ({1, -1} : Set ℂ ) ↔ ∀ w1 w2, B (s₁.σ w1
 
 
 
+
+class value_of_cocycle where
+value : c  ∈ ({1, -1} : Set ℂ )
+
+variable [Gamma_condition: value_of_cocycle χ₀ w s₁ s₂ w₁ w₂ w₁₂ γ]
+
+
 --Define Weil representation of Ps B
 --Definition 3.8
 structure cover_of_Ps where
 s : Ps B
+integer : ℤ
 omega : End ℂ (Ymodel hp)
-relation : ∀ s k,  omega = (-1 : ℂ) ^ k • ω s
+relation :  omega = (-1 : ℂ) ^ integer • ω s
 
 
 --Corollory 3.10
 structure Weil_rep where
 rep : cover_of_Ps χ₀ hp χ →  End ℂ (Ymodel hp)
-equation : ∀ (s : cover_of_Ps χ₀ hp χ), rep s = s.2
+equation : ∀ (s : cover_of_Ps χ₀ hp χ), rep s = s.3
+
+
+structure Character_of_Weil_rep (s : cover_of_Ps χ₀ hp χ) where
+existw : ∃ w, s.s.σ w - w = ws χ₀ s.s
+char := fun (s : cover_of_Ps χ₀ hp χ) => (-1 : ℂ) ^ (s.integer) * γ (s.s.σ) * χ₀ (s.s.f existw.choose - B (s.s.σ existw.choose) (ws χ₀ s.s))
 
 
 
