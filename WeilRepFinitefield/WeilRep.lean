@@ -374,7 +374,9 @@ lemma coset_eq : let f := fun x:V => (rhoY hp χ) ((s • x : Heisenberg B)⁻¹
   rw [this]
   let g := fun u : I s w => f u.2.choose
   have hequiv : Function.Bijective (quotientkers w s).1 := by apply Equiv.bijective (quotientkers w s).1
-  have hg : ∑ x : V ⧸ (Ker s w), f x.out = ∑  x : V ⧸ (Ker s w), g ((quotientkers w s).1 x) := by sorry
+  have hg : ∑ x : V ⧸ (Ker s w), f x.out = ∑  x : V ⧸ (Ker s w), g ((quotientkers w s).1 x) := by
+    simp
+    sorry
   rw [hg, smul_smul, inv_mul_cancel_of_invertible, one_smul]
   apply Function.Bijective.sum_comp hequiv g
 
@@ -466,8 +468,7 @@ equation : ∀ (s : cover_of_Ps χ₀ hp χ), rep s = s.3
 
 structure Character_of_Weil_rep (s : cover_of_Ps χ₀ hp χ) where
 existw : ∃ w, s.s.σ w - w = ws χ₀ s.s
-char := fun (s : cover_of_Ps χ₀ hp χ) => (-1 : ℂ) ^ (s.integer) * γ (s.s.σ) * χ₀ (s.s.f existw.choose - B (s.s.σ existw.choose) (ws χ₀ s.s))
-
+char := fun (s : cover_of_Ps χ₀ hp χ) => (-1 : ℂ) ^ (s.integer) * γ (s.s.σ) * Fintype.card (Y) * χ₀ (s.s.f existw.choose - B (s.s.σ existw.choose) (ws χ₀ s.s))
 
 
 
