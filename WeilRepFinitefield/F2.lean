@@ -1,4 +1,6 @@
 import Mathlib
+import WeilRepFinitefield.QuadForm
+
 
 
 local notation:max "M2" => Matrix (Fin 2) (Fin 2) (ZMod 2)
@@ -9,20 +11,20 @@ local notation:max "V2" => Matrix (Fin 2) (Fin 1) (ZMod 2)
 abbrev B1 : M2 := !![0,1; 0,0]
 abbrev v1 : V2 := !![0; 1]
 
+/-
 #eval B1 * v1
 #eval v1.transpose * B1 * v1
 #eval B1
 #eval B1 * B1
-#eval B1.transpose
-#check Matrix.toExpr
-
 instance aa: DecidableEq (Fin 2 → ZMod 2) := by infer_instance
-
-
 instance aa': DecidableEq M2 := by infer_instance
+-/
 
+abbrev χ : (ZMod 2) → ℚ := fun x => match x with
+  | 0 => 1
+  | 1 => -1
 
-
+/-
 @[simp]
 lemma Matrix.transpose_fin_two {a b c d: α} : !![a,b;c,d].transpose =!![a,c;b,d] := by
   ext i j
@@ -34,42 +36,92 @@ example (a b c d: R) [CommRing R] : !![a,b;c,d].transpose * !![0,1;-1,0] * !![a,
   ext i j
   fin_cases i <;> fin_cases j
   all_goals ring_nf
+-/
+
 
 section Bilinear_Forms
 
+variable (n : ℕ)
 
-abbrev Omega : M2 := !![0,1; -1,0]
+abbrev MM := Matrix (Fin (2*n)) (Fin (2*n)) (ZMod 2)
+
+abbrev VV := Fin (2*n) → (ZMod 2)
+
+abbrev QQ := QuadForm (ZMod 2) (2*n)
+
+abbrev J : MM n := fun i j =>
+  if j = n+i then 1 else if i = n+j then -1 else 0
+
+abbrev Omega : M2 := J 1
 
 #eval Omega
 
-abbrev is_form_omega (B : M2) : Prop :=
-   (B -  B.transpose) = Omega
+abbrev Sp : Finset (MM n) := Finset.filter (fun g =>  g.transpose * (J n) * g = (J n)) (Finset.univ)
+
+namespace Sp2
+
+-- Proposition 4.1 part 2
+lemma univ_eq : Sp 1 = {
+  !![0, 1; 1, 0], !![0, 1; 1, 1], !![1, 0; 0, 1],
+  !![1, 0; 1, 1], !![1, 1; 0, 1], !![1, 1; 1, 0]}
+  := by decide
 
 
-abbrev quadratic_form (B : M2) : V2 → ZMod 2:= fun x =>
- ((x.transpose) * B * x) 0 0
+end Sp2
 
-abbrev is_orthogonal_transform (B : M2) : M2 → Prop := fun g =>
-  ∀ x : V2, quadratic_form B x = quadratic_form B (g * x)
+abbrev is_form_J (B : MM n) : Prop :=
+   (B -  B.transpose) = J n
 
+abbrev all_B_forms : Finset (MM n) :=
+Finset.filter (is_form_J n) (Finset.univ)
+
+lemma all_bilinearforms : all_B_forms 1=
+  {!![0, 0; 1, 0], !![0, 0; 1, 1], !![0, 1; 0, 0],
+ !![0, 1; 0, 1], !![1, 0; 1, 0], !![1, 0; 1, 1],
+ !![1, 1; 0, 0], !![1, 1; 0, 1]}
+ := by decide
+
+variable {n}
+abbrev quadratic_form (B : MM n) : VV n → ZMod 2:= fun x =>
+ (x ·ᵥ (B *ᵥ x))
+
+abbrev is_orthogonal_transform (B : MM n) : MM n → Prop := fun g =>
+  ∀ x : VV n, quadratic_form B x = quadratic_form B (g *ᵥ x)
+
+
+def nilcone_card (B : MM n) : ℕ :=
+  let nil := Finset.filter (fun x => quadratic_form B x= 0) (Finset.univ : Finset $ VV n)
+  Finset.card nil
+
+#eval!  Finset.image nilcone_card $ all_B_forms 2
+
+def Ps : Finset (MM n × QQ n) :=
+Finset.filter (fun (σ,f) => ∀ w1 w2 : VV n, f.fun (w1+w2) - f w1 - f w2 = 0) Finset.univ
+
+
+namespace Witt_1
+
+abbrev B0 : MM 1 := !![0, 1; 0, 0]
+
+
+-- Proposition 4.2 part 1
+abbrev O2 :=  Finset.filter (is_orthogonal_transform B0)  (Finset.univ)
+
+lemma O2.univ_eq : O2 = {!![0, 1; 1, 0], !![1, 0; 0, 1]}
+  := by native_decide
+
+
+
+end Witt_1
+
+namespace Witt_0
+
+abbrev B0 : MM 1 := !![1,1;0,1]
 -- Proposition 4.5 part 1
-#eval Finset.filter (is_orthogonal_transform !![1,1;0,1])  (Finset.univ)
+#eval Finset.filter (is_orthogonal_transform B0)  (Finset.univ)
 
 
-abbrev all_B_forms : Finset M2 :=
-Finset.filter is_form_omega (Finset.univ)
 
 #eval all_B_forms
 
-def Witt_index (B : M2) : ℕ :=
-  let nil := Finset.filter (fun x => quadratic_form B x= 0) (Finset.univ : Finset $ Matrix (Fin 2) (Fin 1) (ZMod 2))
-  Finset.card nil
-
-#eval  Finset.image Witt_index all_B_forms
-
-#eval Witt_index ![![1, 1], ![0, 1]]
-
-
-
-#eval (Finset.univ : Finset M2)
-#eval Finset.filter is_form_omega (Finset.univ)
+end Witt_0
