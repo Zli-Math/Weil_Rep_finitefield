@@ -2,7 +2,7 @@ import Mathlib
 import WeilRepFinitefield.QuadForm
 
 
-
+open Matrix
 local notation:max "M2" => Matrix (Fin 2) (Fin 2) (ZMod 2)
 
 
@@ -83,7 +83,8 @@ lemma all_bilinearforms : all_B_forms 1=
 
 variable {n}
 abbrev quadratic_form (B : MM n) : VV n → ZMod 2:= fun x =>
- (x ·ᵥ (B *ᵥ x))
+ (x ⬝ᵥ (B *ᵥ x))
+
 
 abbrev is_orthogonal_transform (B : MM n) : MM n → Prop := fun g =>
   ∀ x : VV n, quadratic_form B x = quadratic_form B (g *ᵥ x)
@@ -93,10 +94,15 @@ def nilcone_card (B : MM n) : ℕ :=
   let nil := Finset.filter (fun x => quadratic_form B x= 0) (Finset.univ : Finset $ VV n)
   Finset.card nil
 
-#eval!  Finset.image nilcone_card $ all_B_forms 2
+variable (B : MM n)
+
+#eval (Finset.univ : Finset (MM 1 × QQ 1))
 
 def Ps : Finset (MM n × QQ n) :=
-Finset.filter (fun (σ,f) => ∀ w1 w2 : VV n, f.fun (w1+w2) - f w1 - f w2 = 0) Finset.univ
+Finset.filter
+  (fun (σ,f) => ∀ w1 w2 : VV n, f.eval (w1+w2) - f.eval w1 - f.eval w2 = (σ *ᵥ w1) ⬝ᵥ (B *ᵥ (σ *ᵥ w2)) - w1 ⬝ᵥ B *ᵥ w2 )
+  Finset.univ
+
 
 
 namespace Witt_1
@@ -108,9 +114,18 @@ abbrev B0 : MM 1 := !![0, 1; 0, 0]
 abbrev O2 :=  Finset.filter (is_orthogonal_transform B0)  (Finset.univ)
 
 lemma O2.univ_eq : O2 = {!![0, 1; 1, 0], !![1, 0; 0, 1]}
-  := by native_decide
+  := by decide
 
-
+lemma Ps2.univ_eq : Ps B0 =
+{(!![0, 1; 1, 0], !#[![0], ![1, 0]]),
+ (!![0, 1; 1, 0], !#[![0], ![1, 1]]),
+ (!![0, 1; 1, 0], !#[![1], ![1, 0]]),
+ (!![0, 1; 1, 0], !#[![1], ![1, 1]]),
+ (!![1, 0; 0, 1], !#[![0], ![0, 0]]),
+ (!![1, 0; 0, 1], !#[![0], ![0, 1]]),
+ (!![1, 0; 0, 1], !#[![1], ![0, 0]]),
+ (!![1, 0; 0, 1], !#[![1], ![0, 1]])}
+ := by native_decide
 
 end Witt_1
 
