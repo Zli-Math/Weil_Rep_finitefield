@@ -32,7 +32,7 @@ macro_rules
 def quadSnocUnexpander : Lean.PrettyPrinter.Unexpander
   | `($_ !#[$term0, $terms,*] $term1 ) => `(!#[$term0, $terms,*, $term1])
   | `($_ !#[$term0] $term1 ) => `(!#[$term0, $term1])
-  | `($_ ![] $term ) => `(!#[$term])
+  | `($_ !#[] $term ) => `(!#[$term])
   | _ => throw ()
 
 /-- Unexpander for the `![]` notation. -/
@@ -48,11 +48,7 @@ instance hasRepr [Repr F] : Repr (QuadForm F n) where
       ((List.finRange n).map fun n => repr (f n)) ("," ++ Std.Format.line)) "]"
 
 
-abbrev Q0 : QuadForm (ZMod 2) 0 := !#[]
-abbrev Q1 : QuadForm (ZMod 2) 1 := !#[![0]]
-abbrev Q1' : QuadForm (ZMod 2) 2:= !#[![0],![1,0]]
-abbrev Q1'' : QuadForm (ZMod 2) 3:= !#[![0],![1,0],![1,0,0]]
-abbrev Q1''' : QuadForm (ZMod 2) 4:= !#[![0],![1,0],![1,0,0],![1,2,3,4]]
+
 
 open Lean Qq in
 def mkLiteralQ {u : Level} {F : Q(Type u)} {n : ℕ} (elems : (i : Fin n) → Q(Fin ($i+1) → $F)) :
@@ -66,17 +62,46 @@ def mkLiteralQ {u : Level} {F : Q(Type u)} {n : ℕ} (elems : (i : Fin n) → Q(
       q(quadSnoc $init $last)
 
 open Lean Qq Matrix in
-protected instance toExpr [ToLevel.{u}] [ToExpr F] (n : ℕ) : ToExpr (QuadForm F n) :=
+protected instance toExpr {F : Type u} [ToLevel.{u}] [ToExpr F] (n : ℕ) : ToExpr (QuadForm F n) :=
   have lu := toLevel.{u}
   have eF : Q(Type $lu) := toTypeExpr F
   let toTypeExpr := q(QuadForm $eF $n)
   { toTypeExpr, toExpr v := mkLiteralQ (F:=eF) (fun i => toExpr (v i)) }
 
 
-#eval (Finset.univ : Finset $ QuadForm (ZMod 2) 2)
----#eval (!#[![0],![1,0]] : QuadForm (ZMod 2) 2)
+open Lean Qq Matrix in
+protected instance _root_.ZMod.instToExpr (n : ℕ) : ToExpr (ZMod n) :=
+  match n with
+  | 0 => by
+    rw [ZMod] at *
+    infer_instance
+  | n+1 => by
+    rw [ZMod] at *
+    infer_instance
 
 end quadNotation
 
+section evaluation
 
+abbrev eval (f : QuadForm F n) (w : Fin n → F) : F :=
+  ∑ (i : Fin n), ∑ (j : Fin (i+1)), f i j * w i * w ⟨j, by linarith [i.2,j.2]⟩
+
+#print eval._proof_1
+
+end evaluation
+
+
+section test
+abbrev Q0 : QuadForm (ZMod 2) 0 := !#[]
+abbrev Q1 : QuadForm (ZMod 2) 1 := !#[![0]]
+abbrev Q1' : QuadForm (ZMod 2) 2:= !#[![0],![1,0]]
+abbrev Q1'' : QuadForm (ZMod 2) 3:= !#[![0],![1,0],![1,0,0]]
+abbrev Q1''' : QuadForm (ZMod 2) 4:= !#[![0],![1,0],![1,0,0],![1,2,3,4]]
+
+open Lean Qq
+#eval  (by_elab return Lean.toExpr Q1'') = Q1''
+--#eval  Lean.toExpr (Finset.univ : Finset $ QuadForm (ZMod 2) 2)
+---#eval (!#[![0],![1,0]] : QuadForm (ZMod 2) 2)
+
+end test
 end QuadForm
