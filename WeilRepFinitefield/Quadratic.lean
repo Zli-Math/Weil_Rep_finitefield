@@ -1,15 +1,45 @@
 import Mathlib
-import WeilRepFinitefield.Heisenberg
 
+import WeilRepFinitefield.Compute
+import WeilRepFinitefield.QuadForm
 
 section Orthogonal
 variable {R : Type*} [CommSemiring R]  {M : Type*} [AddCommMonoid M]
 [Module R M]
 
 abbrev QuadraticForm.O (Q : QuadraticForm R M) :=
-  {σ : M →ₗ[R] M // ∀ v : M, Q (σ v) = Q v}
+  {σ : M ≃ₗ[R] M // ∀ v : M, Q (σ v) = Q v}
 
 end Orthogonal
+
+namespace Compute.test
+
+
+local notation "F" => (ZMod 2)
+
+local notation "GL2" => ((Fin 2) → F) ≃ₗ[F] ((Fin 2) → F)
+
+abbrev Q : QuadForm F 2 := !#[![0],![1,0]]
+abbrev QQ := Q.toQuadraticForm
+
+#synth Repr QQ.O
+
+def mm : QQ.O := ⟨LinearEquiv.toGL'.symm ⟨!![0, 1; 1, 0],(by decide)⟩,by decide⟩
+
+#check mm.2
+#eval! FinEnum.toList QQ.O
+
+abbrev Q' : QuadForm F 2 := !#[![1],![1,1]]
+abbrev QQ' := Q'.toQuadraticForm
+
+#synth Repr QQ'.O
+
+def mm' : QQ'.O := ⟨LinearEquiv.toGL'.symm ⟨!![0, 1; 1, 0],by decide⟩,by decide⟩
+
+#eval! FinEnum.toList QQ'.O
+
+
+end Compute.test
 
 
 section Quadratic_Form

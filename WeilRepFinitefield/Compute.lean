@@ -1,10 +1,16 @@
 import Mathlib
 
+
 section
 
 universe u
 
+
 variable {α β γ : Type*} {R :Type u} [CommSemiring R]
+
+
+instance (priority:=5000) instReprSubtype_decide{p : α → Prop} [DecidablePred p] [Repr α] : Repr (Subtype p) where
+  reprPrec s prec := "⟨" ++ reprPrec s.val prec ++ ",by decide⟩"
 
 
 instance : ∀ (n : ℕ) [NeZero n],  FinEnum (ZMod n)
@@ -70,10 +76,12 @@ def LinearEquiv.toGL' : ((α → K) ≃ₗ[K] (α → K)) ≃  { g : Matrix α �
 instance :  FinEnum $ (α → K) ≃ₗ[K] (α → K) :=  FinEnum.ofEquiv  ({ g : Matrix α α K // g.det ≠ 0})  (LinearEquiv.toGL')
 
 
-unsafe instance {n : ℕ} [Repr K]  : Repr ((Fin n → K) ≃ₗ[K] (Fin n → K))  where
-  reprPrec := fun v _ => "LinearEquiv.toGL'.symm ⟨" ++ repr v.toGL' ++",by decide⟩"
+instance {n : ℕ} [Repr K]  : Repr ((Fin n → K) ≃ₗ[K] (Fin n → K))  where
+  reprPrec := fun v _ => "LinearEquiv.toGL'.symm ⟨" ++ repr v.toGL'.1 ++",by decide⟩"
 
-section test
+
+
+namespace Compute.test
 
 local notation "F" => (ZMod 2)
 
@@ -134,6 +142,6 @@ example : FinEnum.toList (LinearMap.BilinForm F V2)= [(!![0, 0; 0, 0]).toBilin',
  (!![1, 1; 1, 1]).toBilin']
  := by decide
 
-end test
+end Compute.test
 
 end

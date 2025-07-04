@@ -1,6 +1,6 @@
 import Mathlib
 
-variable (F: Type*) [Ring F] (n : ℕ)
+variable (F: Type*) [CommSemiring F] (n : ℕ)
 
 abbrev QuadForm := (i :Fin n) → Fin (i+1) → F
 
@@ -93,6 +93,16 @@ abbrev eval (f : QuadForm F n) (w : Fin n → F) : F :=
 --#print eval._proof_1
 
 end evaluation
+
+
+section toQuadraticForm
+
+def toQuadraticForm (f : QuadForm F n) : QuadraticForm F (Fin n → F) where
+  toFun := fun w => f.eval w
+  toFun_smul := sorry
+  exists_companion' := sorry
+
+end toQuadraticForm
 
 
 section test
