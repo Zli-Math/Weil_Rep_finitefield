@@ -1,6 +1,12 @@
 import Mathlib
 import WeilRepFinitefield.QuadForm
 
+section Aux
+instance : ∀ (n : ℕ) [NeZero n],  FinEnum (ZMod n)
+  | 0, h => (h.ne _ rfl).elim
+  | n + 1, _ => @FinEnum.fin (n+1)
+
+end Aux
 
 open Matrix
 local notation:max "M2" => Matrix (Fin 2) (Fin 2) (ZMod 2)
@@ -98,17 +104,18 @@ variable (B : MM n)
 
 #eval (Finset.univ : Finset (MM 1 × QQ 1))
 
-def Ps : Finset (MM n × QQ n) :=
+abbrev Ps : Finset (MM n × QQ n) :=
 Finset.filter
-  (fun (σ,f) => ∀ w1 w2 : VV n, f.eval (w1+w2) - f.eval w1 - f.eval w2 = (σ *ᵥ w1) ⬝ᵥ (B *ᵥ (σ *ᵥ w2)) - w1 ⬝ᵥ B *ᵥ w2 )
+  (fun (σ,f) => ∀ w1 w2 : VV n, f.eval (w1+w2) - f.eval w1 - f.eval w2 = (σ *ᵥ w1) ⬝ᵥ B *ᵥ (σ *ᵥ w2) - w1 ⬝ᵥ B *ᵥ w2 )
   Finset.univ
-
-
 
 namespace Witt_1
 
 abbrev B0 : MM 1 := !![0, 1; 0, 0]
 
+
+
+#eval FinEnum.toList $ QuadForm (ZMod 2) 2
 
 -- Proposition 4.2 part 1
 abbrev O2 :=  Finset.filter (is_orthogonal_transform B0)  (Finset.univ)
