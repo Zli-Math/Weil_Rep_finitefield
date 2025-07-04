@@ -1,5 +1,16 @@
 import Mathlib
-import WeilRepFinitefield.HeisenbergGroup
+import WeilRepFinitefield.Heisenberg
+
+
+section Orthogonal
+variable {R : Type*} [CommSemiring R]  {M : Type*} [AddCommMonoid M]
+[Module R M]
+
+abbrev QuadraticForm.O (Q : QuadraticForm R M) :=
+  {σ : M →ₗ[R] M // ∀ v : M, Q (σ v) = Q v}
+
+end Orthogonal
+
 
 section Quadratic_Form
 

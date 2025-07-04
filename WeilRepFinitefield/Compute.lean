@@ -8,6 +8,7 @@ variable {α β γ : Type*} {R :Type u} [CommSemiring R]
 
 local notation "F" => (ZMod 2)
 
+abbrev MM n := Matrix (Fin (2*n)) (Fin (2*n)) (ZMod 2)
 abbrev VV n := Fin (2*n) → (ZMod 2)
 
 abbrev V2 := VV 1
@@ -26,7 +27,32 @@ instance  [FinEnum R] [CommSemiring R]  [FinEnum α] [FinEnum β] [DecidableEq �
   FinEnum $ (α → R) →ₗ[R] (β → R):=  @FinEnum.ofEquiv  (Matrix β α R) ((α → R) →ₗ[R] (β → R)) (Matrix.instFinEnum) (LinearMap.toMatrix'.toEquiv)
 
 instance [Repr R]  : Repr ((Fin n → R) →ₗ[R] (Fin m → R)) where
-  reprPrec := fun v _ => repr v.toMatrix'++".toLin'"
+  reprPrec := fun v _ => "(" ++ repr v.toMatrix'++").toLin'"
+
+
+instance  [FinEnum R]  [FinEnum α] [DecidableEq α]
+ :
+  FinEnum $ LinearMap.BilinForm R (α → R) :=  @FinEnum.ofEquiv  (Matrix α α R) _ (Matrix.instFinEnum) (LinearMap.BilinForm.toMatrix'.toEquiv)
+
+
+instance [Repr R]  : Repr (LinearMap.BilinForm R (Fin n → R)) where
+  reprPrec := fun v _ => "(" ++ repr v.toMatrix'++").toBilin'"
+
+section Inv
+
+
+end Inv
+
+abbrev B : MM 1 := !![0,1;1,1]
+
+variable [Fintype n] [DecidableEq n] [CommRing α] [Inv α]
+instance (priority := 1000) Matrix.inv_of_inv : Inv (Matrix n n α):=
+  ⟨fun A => A.det⁻¹ • A.adjugate⟩
+
+
+#synth Inv (MM 1)
+
+#eval B⁻¹
 
 /-
 #eval FinEnum.toList (Matrix (Fin 2) (Fin 2) F)
@@ -50,6 +76,28 @@ example : FinEnum.toList (V2 →ₗ[F]V2) =[!![0, 0; 0, 0].toLin',
  !![1, 1; 1, 1].toLin'] := by decide
 
 #eval FinEnum.toList ((Fin 2→ F) →ₗ[F](Fin 2 → F))
+
+
+#eval FinEnum.toList (LinearMap.BilinForm F V2)
+
+example : FinEnum.toList (LinearMap.BilinForm F V2)= [(!![0, 0; 0, 0]).toBilin',
+ (!![0, 0; 0, 1]).toBilin',
+ (!![0, 0; 1, 0]).toBilin',
+ (!![0, 0; 1, 1]).toBilin',
+ (!![0, 1; 0, 0]).toBilin',
+ (!![0, 1; 0, 1]).toBilin',
+ (!![0, 1; 1, 0]).toBilin',
+ (!![0, 1; 1, 1]).toBilin',
+ (!![1, 0; 0, 0]).toBilin',
+ (!![1, 0; 0, 1]).toBilin',
+ (!![1, 0; 1, 0]).toBilin',
+ (!![1, 0; 1, 1]).toBilin',
+ (!![1, 1; 0, 0]).toBilin',
+ (!![1, 1; 0, 1]).toBilin',
+ (!![1, 1; 1, 0]).toBilin',
+ (!![1, 1; 1, 1]).toBilin']
+ := by decide
+
 
 -/
 
