@@ -34,14 +34,11 @@ instance [Repr R]  : Repr (LinearMap.BilinForm R (Fin n → R)) where
 
 section Inv
 
-
-end Inv
-
-
 variable [Fintype n] [DecidableEq n] [CommRing α] [Inv α]
 instance (priority := 1000) Matrix.inv_of_inv : Inv (Matrix n n α):=
   ⟨fun A => A.det⁻¹ • A.adjugate⟩
 
+end Inv
 
 --#synth Inv (MM 1)
 
@@ -90,6 +87,8 @@ local notation "GL2" => ((Fin 2) → F) ≃ₗ[F] ((Fin 2) → F)
 #eval FinEnum.toList $ GL2
 
 abbrev B : MM 1 := !![0,1;1,1]
+
+#eval B⁻¹
 
 #eval (LinearEquiv.toGL'.symm ⟨!![0, 1; 1, 0],by decide⟩ : GL2)
 #eval FinEnum.toList (Matrix (Fin 2) (Fin 2) F)
