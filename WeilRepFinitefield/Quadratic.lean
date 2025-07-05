@@ -70,6 +70,7 @@ additive : ∀ a b , f (a + b) = f (a) + f (b)
 
 variable (f : V → K )[Quadraticform f]
 
+#check LinearMap.BilinForm.Nondegenerate
 
 class NonDegenerate (B : V → V → K) where
   nondeg : ∀ v , (∀ w , B v w =0) → v = 0

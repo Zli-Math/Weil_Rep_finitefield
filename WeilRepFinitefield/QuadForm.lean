@@ -97,10 +97,17 @@ end evaluation
 
 section toQuadraticForm
 
+
+
 def toQuadraticForm (f : QuadForm F n) : QuadraticForm F (Fin n → F) where
   toFun := fun w => f.eval w
-  toFun_smul := sorry
-  exists_companion' := sorry
+  toFun_smul := by
+    intros; unfold eval
+    simp only [Pi.smul_apply, smul_eq_mul,Finset.mul_sum]
+    repeat congr;ext
+    ring
+  exists_companion' := by
+    use
 
 end toQuadraticForm
 
