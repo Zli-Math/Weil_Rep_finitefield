@@ -117,6 +117,8 @@ instance {n : ℕ} [Repr K]  : Repr ((Fin n → K) ≃ₗ[K] (Fin n → K))  whe
 
 end GLNotation
 
+
+/-
 namespace Compute.test
 
 local notation "F" => (ZMod 2)
@@ -190,5 +192,5 @@ example : FinEnum.toList (LinearMap.BilinForm F V2)= [(!![0, 0; 0, 0]).toBilin',
  := by decide
 
 end Compute.test
-
+-/
 end

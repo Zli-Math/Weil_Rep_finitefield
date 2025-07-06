@@ -2,6 +2,7 @@ import Mathlib
 
 import WeilRepFinitefield.Compute
 import WeilRepFinitefield.QuadForm
+import WeilRepFinitefield.Heisenberg
 
 section Orthogonal
 variable {R : Type*} [CommSemiring R]  {M : Type*} [AddCommMonoid M]
@@ -49,12 +50,13 @@ open Heisenberg
 
 
 variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V][Module K V]
-variable (B : V → V → K )[bilinearB : IsBilinear B]
+
+--variable (B : V → V → K )[bilinearB : IsBilinear B]
+variable (B : LinearMap.BilinForm K V)
 
 
-
-def form ( f: V → K) : ( V →  V →  K ) := fun x => (fun y => f (x + y) - f (x) - f (y))
-
+--def form ( f: V → K) : ( V →  V →  K ) := fun x => (fun y => f (x + y) - f (x) - f (y))
+/-
 @[ext]
 class Quadraticform (f : V → K) where
 bilinear : IsBilinear (form f)
@@ -65,18 +67,19 @@ sq_smul : ∀ (t : K) v , f ( t • v ) = t^2 * f (v)
 class addQuadraticform (f : V → K)  where
 Quadf : Quadraticform f
 additive : ∀ a b , f (a + b) = f (a) + f (b)
+-/
 
 
+variable (f : QuadraticForm K V)
 
-variable (f : V → K )[Quadraticform f]
-
-#check LinearMap.BilinForm.Nondegenerate
-
-class NonDegenerate (B : V → V → K) where
-  nondeg : ∀ v , (∀ w , B v w =0) → v = 0
+#check f.polarBilin.Nondegenerate
 
 
-def isNonDegenerate (B : V → V → K) := ∀ v , (∀ w , B v w =0) → v = 0
+class NonDegenerate (B: LinearMap.BilinForm K V ) where
+   nondeg : B.Nondegenerate
+
+
+def isNonDegenerate (B : LinearMap.BilinForm K V) := ∀ v , (∀ w , B v w =0) → v = 0
 
 omit [Module K V] in
 lemma NonDegenerate.isNonDegenerate (B : V → V → K) [h : NonDegenerate B] : isNonDegenerate B := h.nondeg

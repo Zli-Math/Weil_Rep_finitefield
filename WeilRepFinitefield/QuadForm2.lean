@@ -30,10 +30,8 @@ def quadSnocUnexpander : Lean.PrettyPrinter.Unexpander
   | _ => throw ()
 
 
-instance hasRepr [Repr F] : Repr (QuadForm F n) where
+instance (priority := 5000) hasRepr [Repr F] : Repr (QuadForm F n) where
   reprPrec f _ := "(!QF " ++ repr f.1 ++ ")"
-
-
 
 end quadNotation
 
@@ -42,14 +40,11 @@ end quadNotation
 
 section toQuadraticForm
 
-abbrev toQuadraticForm (B : QuadForm F n) : QuadraticForm F (Fin n → F)
-:= B.1.toBilin'.toQuadraticMap
-
 variable {F : Type*} [CommRing F] [DecidableEq F] {n :ℕ}
 
 private abbrev pure (i : Fin n) : Fin n → F := Function.update 0 i 1
 
-abbrev _root_.QuadraticForm.toQuadForm (f: QuadraticForm F (Fin n → F)) : QuadForm F n := ⟨
+abbrev _root_.QuadraticForm.toQuadForm_aux (f: QuadraticForm F (Fin n → F)) : QuadForm F n := ⟨
     fun i j =>
       if H : j > i then 0 else
         if H': j = i then f (Function.update 0 i 1)
@@ -63,15 +58,25 @@ abbrev _root_.QuadraticForm.toQuadForm (f: QuadraticForm F (Fin n → F)) : Quad
     ⟩
 
 
-def equivQuadraticForm : (QuadForm F n) ≃ (QuadraticForm F (Fin n → F)) where
-  toFun := toQuadraticForm
-  invFun := QuadraticForm.toQuadForm
+def toQuadraticForm : (QuadForm F n) ≃ (QuadraticForm F (Fin n → F)) where
+  toFun := fun B => B.1.toBilin'.toQuadraticMap
+  invFun := QuadraticForm.toQuadForm_aux
   left_inv := by
     intro f
     sorry
   right_inv := by
     intro f
     sorry
+
+def _root_.QuadraticForm.toQuadForm := QuadForm.toQuadraticForm (F:=F) (n:=n) |>.symm
+
+instance  [FinEnum R] [CommRing R] [FinEnum R]
+ :
+  FinEnum $ QuadraticForm R (Fin n → R) :=  FinEnum.ofEquiv  _  (QuadraticForm.toQuadForm)
+
+
+instance (priority := 5000) QuadraticForm.hasRepr [Repr F] : Repr (QuadraticForm F (Fin n → F)) where
+  reprPrec f _ := "(!QF " ++ repr f.toQuadForm.1 ++ ").toQuadraticForm"
 
 end toQuadraticForm
 
@@ -84,10 +89,20 @@ abbrev Q1'' : QuadForm (ZMod 2) 3:= !QF!![0,0,0;0,1,0;1,0,0]
 
 #eval Q1
 #eval Q1'
-#eval Q1''
+#eval Q1''.toQuadraticForm.toQuadForm
 #eval! FinEnum.toList (QuadraticForm (ZMod 2) (Fin 2 → ZMod 2))
 
-
+example :(FinEnum.toList (QuadraticForm (ZMod 2) (Fin 2 → ZMod 2)))
+=
+[(!QF !![0, 0; 0, 0]).toQuadraticForm,
+ (!QF !![0, 0; 0, 1]).toQuadraticForm,
+ (!QF !![0, 0; 1, 0]).toQuadraticForm,
+ (!QF !![0, 0; 1, 1]).toQuadraticForm,
+ (!QF !![1, 0; 0, 0]).toQuadraticForm,
+ (!QF !![1, 0; 0, 1]).toQuadraticForm,
+ (!QF !![1, 0; 1, 0]).toQuadraticForm,
+ (!QF !![1, 0; 1, 1]).toQuadraticForm]
+:= by decide
 
 open Lean Qq
 example : (Fin 2) = (ZMod 2) := rfl

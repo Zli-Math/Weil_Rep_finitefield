@@ -30,7 +30,24 @@ lemma  rlinear : ∀ r w v , B w (r + v) = B w r + B w v := by simp
 lemma  lslinear: ∀ (r : K) (w v : V) , B (r • w) v = r * B w v := by simp
 lemma rslinear: ∀ (r : K) (w v : V) , B w (r • v) = r * B w v := by simp
 
+
+abbrev toAlt := B - B.flip
+
+lemma toAlt_isAlt : B.toAlt.IsAlt := by intro; simp
+
+
+
 end LinearMap.BilinForm
+
+section NonDegenerate
+
+class NonDegenerate (B : LinearMap.BilinForm K V) where
+  nondeg: B.Nondegenerate
+
+lemma
+
+end NonDegenerate
+
 
 
 namespace Heisenberg
@@ -114,6 +131,48 @@ instance instGroup : Group (Heisenberg B) where
       _ = ⟨0,0⟩  := by simp [Blzero]
       _ = _ := by rfl
 
+
+abbrev C : Subgroup (Heisenberg B) := Subgroup.center _
+
+abbrev SubK : Subgroup (Heisenberg B) where
+  carrier := { a | a.1 = 0 }
+  mul_mem' := by
+    intro a b ha hb
+    simp_all
+    rw [mul_def]
+    simp [ha , hb]
+  one_mem' := by
+    simp
+  inv_mem' := by
+    intro x h
+    simp_all
+    simp [inv_def , h]
+
+
+--Proposition 1.4
+theorem centralextension : (SubK B).carrier ⊆ (C B).carrier := by
+  intro x h
+  simp [SubK] at h
+  rw [Subgroup.mem_carrier]
+  rw [Subgroup.mem_center_iff]
+  intro y
+  repeat rw [mul_def]
+  simp [add_comm , h]
+--Subgroup.subgroupOf
+
+theorem center_is_K_of_nondegenerateB [hnd: NonDegenerate B.toAlt ] : (SubK B) = (C B) := by
+  have nondege  := hnd.1
+  ext x
+  constructor
+  apply centralextension
+  intro h
+  simp [SubK , C] at h ⊢
+  rw [Subgroup.mem_center_iff] at h
+  simp_rw [mul_def] at h
+  simp [add_comm] at h
+  simp [LinearMap.BilinForm.toAlt] at nondege
+  specialize nondege x.1
+  exact nondege (by convert h using 1; simp [sub_eq_zero] ; tauto)
 
 
 
