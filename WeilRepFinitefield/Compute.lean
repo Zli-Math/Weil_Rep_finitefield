@@ -8,7 +8,6 @@ universe u
 
 variable {α β γ : Type*} {R :Type u} [CommSemiring R]
 
-
 instance (priority:=5000) instReprSubtype_decide{p : α → Prop} [DecidablePred p] [Repr α] : Repr (Subtype p) where
   reprPrec s prec := "⟨" ++ reprPrec s.val prec ++ ",by decide⟩"
 
@@ -38,6 +37,24 @@ instance  [FinEnum R]  [FinEnum α] [DecidableEq α]
 instance [Repr R]  : Repr (LinearMap.BilinForm R (Fin n → R)) where
   reprPrec := fun v _ => "(" ++ repr v.toMatrix'++").toBilin'"
 
+
+abbrev LinearEquiv.id [AddCommMonoid M] [Module R M] : M ≃ₗ[R] M where
+  toFun := _root_.id
+  map_add' := by
+    intro _ _
+    simp
+  map_smul' := by
+    intro _ _
+    simp
+  invFun := _root_.id
+  left_inv := by
+    intro x
+    simp
+  right_inv := by
+    intro x
+    simp
+
+
 section Inv
 
 variable [Fintype n] [DecidableEq n] [CommRing α] [Inv α]
@@ -50,7 +67,7 @@ end Inv
 
 --#eval B⁻¹
 
-
+section GLNotation
 variable [Field K] [FinEnum K]  [FinEnum α] [DecidableEq α]
 
 --#synth FinEnum $ { g : Matrix α α K // g.det ≠ 0}
@@ -76,11 +93,32 @@ def LinearEquiv.toGL' : ((α → K) ≃ₗ[K] (α → K)) ≃  { g : Matrix α �
 instance :  FinEnum $ (α → K) ≃ₗ[K] (α → K) :=  FinEnum.ofEquiv  ({ g : Matrix α α K // g.det ≠ 0})  (LinearEquiv.toGL')
 
 
+instance : Inhabited ((α → K) ≃ₗ[K] (α → K)) where
+  default := LinearEquiv.id
+
+
+abbrev Matrix.toGL' : Matrix α α K → ((α → K) ≃ₗ[K] (α → K))
+  := fun A => if H : A.det ≠ 0 then LinearEquiv.toGL'.symm ⟨A, H⟩ else default
+
+syntax (name := GLNotation) "!GL" term  : term
+
+macro_rules
+  | `(!GL $term:term) => `(Matrix.toGL' $term )
+
+
+@[app_unexpander Matrix.toGL']
+def quadSnocUnexpander : Lean.PrettyPrinter.Unexpander
+  | `($_ $term ) => `(!GL $term)
+  | _ => throw ()
+
+
 instance {n : ℕ} [Repr K]  : Repr ((Fin n → K) ≃ₗ[K] (Fin n → K))  where
-  reprPrec := fun v _ => "LinearEquiv.toGL'.symm ⟨" ++ repr v.toGL'.1 ++",by decide⟩"
+  reprPrec := fun v _ => "!GL" ++ repr v.toGL'.1 ++ ""
+
+end GLNotation
 
 
-
+/-
 namespace Compute.test
 
 local notation "F" => (ZMod 2)
@@ -92,7 +130,18 @@ abbrev V2 := VV 1
 
 local notation "GL2" => ((Fin 2) → F) ≃ₗ[F] ((Fin 2) → F)
 
+abbrev AA := (!GL !![0,1;1,0]:GL2)
+example : AA = AA := by
+  rewrite [AA]
+  rfl
+
+#eval (Matrix.toGL' !![0, 1; 1, 0]:GL2)
+
 #eval FinEnum.toList $ GL2
+
+example : (FinEnum.toList $ GL2) =
+  [!GL!![0, 1; 1, 0], !GL!![0, 1; 1, 1], !GL!![1, 0; 0, 1], !GL!![1, 0; 1, 1], !GL!![1, 1; 0, 1], !GL!![1, 1; 1, 0]]
+  := by decide
 
 abbrev B : MM 1 := !![0,1;1,1]
 
@@ -143,5 +192,5 @@ example : FinEnum.toList (LinearMap.BilinForm F V2)= [(!![0, 0; 0, 0]).toBilin',
  := by decide
 
 end Compute.test
-
+-/
 end

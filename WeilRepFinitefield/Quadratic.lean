@@ -75,6 +75,7 @@ variable (f : QuadraticForm K V)
 #check f.polarBilin.Nondegenerate
 
 
+variable (f : QuadraticForm K V)
 
 
 def isNonDegenerate (B : LinearMap.BilinForm K V) := ∀ v , (∀ w , B v w =0) → v = 0

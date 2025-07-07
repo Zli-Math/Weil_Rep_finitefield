@@ -1,5 +1,6 @@
 import Mathlib
-import WeilRepFinitefield.Quadratic
+--import WeilRepFinitefield.Quadratic
+import Mathlib.Heisenberg
 
 noncomputable section Schrodinger_Model
 
