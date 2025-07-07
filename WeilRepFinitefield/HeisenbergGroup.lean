@@ -22,7 +22,6 @@ class IsBilinear (B : V →  V → K) where
 
 
 
-
 namespace Heisenberg
 
 variable [bilinearB : IsBilinear B]
@@ -107,7 +106,6 @@ instance instGroup : Group (Heisenberg B) where
       _ = ⟨0, B 0 a.1⟩  := by simp [<-IsBilinear.llinear]
       _ = ⟨0,0⟩  := by simp [Blzero]
       _ = _ := by rfl
-
 
 
 

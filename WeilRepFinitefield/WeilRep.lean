@@ -1,6 +1,7 @@
 import Mathlib
-import WeilRepFinitefield.HeisenbergRepresentation
-import WeilRepFinitefield.PseudoSymplecticGroup
+--import WeilRepFinitefield.HeisenbergRepresentation
+import WeilRepFinitefield.Schrodinger_Model
+import WeilRepFinitefield.PSGroup
 
 open Module
 open BigOperators
