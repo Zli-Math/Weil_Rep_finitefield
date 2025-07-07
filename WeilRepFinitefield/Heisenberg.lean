@@ -44,7 +44,6 @@ section NonDegenerate
 class NonDegenerate (B : LinearMap.BilinForm K V) where
   nondeg: B.Nondegenerate
 
-lemma
 
 end NonDegenerate
 
