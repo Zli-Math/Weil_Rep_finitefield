@@ -1,6 +1,6 @@
 import Mathlib
 --import WeilRepFinitefield.Quadratic
-import Mathlib.Heisenberg
+import WeilRepFinitefield.Heisenberg
 
 noncomputable section Schrodinger_Model
 
@@ -9,9 +9,10 @@ open Heisenberg Function
 
 namespace  Schrodinger_Model
 
-variable {K : Type } [hfK : Field K] [Fintype K] {V : Type } [hcV : AddCommGroup V] [hmV : Module K V] [FiniteDimensional K V] (B : V → V → K) [IsBilinear B]
+variable {K : Type } [hfK : Field K]  {V : Type } [hcV : AddCommGroup V] [hmV : Module K V]
+(B : LinearMap.BilinForm K V)
 
-local notation "B_s" => (alternatingform B)
+local notation "B_s" => (B.toAlt)
 
 /- This definition is not correct
 structure polarization (X Y: Submodule K V) where
@@ -68,7 +69,6 @@ def X_coor (w : Heisenberg B) : X := ((hp.1 w.1).choose).1
 def Y_coor (w : Heisenberg B) : Y := ((hp.1 w.1).choose).2
 
 
-omit [Fintype K] [FiniteDimensional K V] [IsBilinear B] in
 lemma element_XY : ∀ w : Heisenberg B, w = ((X_coor B hp w).1 + (Y_coor B hp w).1, w.2):= by
   intro w
   ext
@@ -78,7 +78,6 @@ lemma element_XY : ∀ w : Heisenberg B, w = ((X_coor B hp w).1 + (Y_coor B hp w
     exact this
   · simp
 
-omit [Fintype K] [FiniteDimensional K V] [IsBilinear B] in
 lemma element_of_V_XY : ∀ w : V, w = (X_coor B hp w).1 + (Y_coor B hp w).1:= by
   intro w
   simp [X_coor, Y_coor]
@@ -87,7 +86,6 @@ lemma element_of_V_XY : ∀ w : V, w = (X_coor B hp w).1 + (Y_coor B hp w).1:= b
   exact this
 
 
-omit [Fintype K] [FiniteDimensional K V] [IsBilinear B] in
 lemma coor_linear : ∀ w v, w * v =  ((X_coor B hp w).1 + (Y_coor B hp w).1 + ((X_coor B hp v).1 + (Y_coor B hp v).1), w.2 + v.2 + B w.1 v.1 ) := by
   intro w v
   simp [Heisenberg.mul_def]
@@ -95,7 +93,6 @@ lemma coor_linear : ∀ w v, w * v =  ((X_coor B hp w).1 + (Y_coor B hp w).1 + (
   have hv := element_XY B hp v
   nth_rw 1 [hw, hv]
 
-omit [Fintype K] [FiniteDimensional K V] [IsBilinear B] in
 lemma XY_coor_linear : ∀ w v, (X_coor B hp (w * v)).1 = (X_coor B hp w).1 + (X_coor B hp v).1 ∧ (Y_coor B hp (w * v)).1 = (Y_coor B hp w).1 + (Y_coor B hp v).1 := by
   intro w v
   have hwv := coor_linear B hp w v
@@ -119,7 +116,6 @@ lemma XY_coor_linear : ∀ w v, (X_coor B hp (w * v)).1 = (X_coor B hp w).1 + (X
   simp [X_coor, Y_coor]
 
 
-omit [Fintype K] [FiniteDimensional K V] [IsBilinear B] in
 lemma X_in_X (w : V) (t : K) (h : w ∈ X) : X_coor B hp (w, t) = w := by
   simp [X_coor]
   have h0 : (0 : V) ∈ Y := by simp
@@ -129,7 +125,6 @@ lemma X_in_X (w : V) (t : K) (h : w ∈ X) : X_coor B hp (w, t) = w := by
   have hw := h2 w h 0 h0 (by simp)
   rw [← hw]
 
-omit [Fintype K] [FiniteDimensional K V] [IsBilinear B] in
 lemma Y_in_Y (w : V) (t : K) (h : w ∈ Y) : Y_coor B hp (w, t) = w := by
   simp [Y_coor]
   have h0 : (0 : V) ∈ X := by simp
@@ -139,7 +134,6 @@ lemma Y_in_Y (w : V) (t : K) (h : w ∈ Y) : Y_coor B hp (w, t) = w := by
   have hw := h2 0 h0 w h (by simp)
   rw [← hw]
 
-omit [Fintype K] [FiniteDimensional K V] [IsBilinear B] in
 lemma X_coor_of_Y (y : V) (t : K) (h : y ∈ Y) : X_coor B hp (y, t) = 0 := by
   have hx := element_XY B hp (y, 0)
   have hx':= Y_in_Y B hp y 0 h
@@ -147,10 +141,14 @@ lemma X_coor_of_Y (y : V) (t : K) (h : y ∈ Y) : X_coor B hp (y, t) = 0 := by
   simp at hx
   exact hx
 
-omit [Fintype K] [FiniteDimensional K V] in
+
+variable (w x : V) (t : K)
+#check (⟨w ,t⟩: Heisenberg B)
+
+
+
 lemma X_coor_add_Y (w : V) (t : K) (x : V) (h : x ∈ Y) : X_coor B hp (w+x,t) = X_coor B hp (w,t) := by
-  have : (w + x, t) = (w , t - B w x) * ((x, 0) : Heisenberg B) := by simp [Heisenberg.mul_def]
-  rw [this]
+  rw [add_x_dec]
   have := (XY_coor_linear B hp (w, t - B w x) (x, 0)).1
   norm_cast at this
   rw [this]
@@ -158,7 +156,6 @@ lemma X_coor_add_Y (w : V) (t : K) (x : V) (h : x ∈ Y) : X_coor B hp (w+x,t) =
   simp_all [X_coor]
 
 
-omit [Fintype K] [FiniteDimensional K V] [IsBilinear B] in
 lemma Y_coor_of_X (x : V) (t : K) (h : x ∈ X) : Y_coor B hp (x, t) = 0 := by
   have hx := element_XY B hp (x, 0)
   have hx':= X_in_X B hp x 0 h
@@ -167,10 +164,8 @@ lemma Y_coor_of_X (x : V) (t : K) (h : x ∈ X) : Y_coor B hp (x, t) = 0 := by
   exact hx
 
 
-omit [Fintype K] [FiniteDimensional K V] in
 lemma Y_coor_add_X (w : V) (t : K) (x : V) (h : x ∈ X) : Y_coor B hp (w+x,t) = Y_coor B hp (w,t) := by
-  have : (w + x, t) = (w , t - B w x) * ((x, 0) : Heisenberg B) :=by    simp [Heisenberg.mul_def]
-  rw [this]
+  rw [add_x_dec]
   have := (XY_coor_linear B hp (w, t - B w x) (x, 0)).2
   norm_cast at this
   rw [this]
@@ -178,14 +173,12 @@ lemma Y_coor_add_X (w : V) (t : K) (x : V) (h : x ∈ X) : Y_coor B hp (w+x,t) =
   simp_all [Y_coor]
 
 
-omit [Fintype K] [FiniteDimensional K V] in
 lemma element_XY' : ∀ w : Heisenberg B, w = ((Y_coor B hp w).1, 0) *(((X_coor B hp w).1, w.2 - B  (Y_coor B hp w).1 (X_coor B hp w).1)) := by
   intro w
   simp [Heisenberg.mul_def]
   rw [add_comm]
   exact element_XY B hp w
 
-omit [Fintype K] [FiniteDimensional K V] in
 lemma Y_coor_add_Y (w : V) (t : K) (y : Y) : Y_coor B hp (w + y, t) = Y_coor B hp (w, t) + y := by
   have : (w + y, t) = (w , t - B w y) * ((y, 0) : Heisenberg B) :=by    simp [Heisenberg.mul_def]
   rw [this]
@@ -197,10 +190,8 @@ lemma Y_coor_add_Y (w : V) (t : K) (y : Y) : Y_coor B hp (w + y, t) = Y_coor B h
   rw [this]
   simp [Y_coor]
 
-omit [Fintype K] [FiniteDimensional K V] [IsBilinear B] in
 lemma XY_coor (w : V) (t : K) : X_coor B hp (w, t) = X_coor B hp w ∧   Y_coor B hp (w, t) = Y_coor B hp w := by simp [X_coor, Y_coor]
 
-omit [Fintype K] [FiniteDimensional K V] in
 lemma XY_coor_linear' (w : V) (v : V) : (X_coor B hp (w + v, 0) : V)= X_coor B hp w + X_coor B hp v ∧ (Y_coor B hp (w + v, 0) : V) = Y_coor B hp w + Y_coor B hp v := by
   have : (w + v, 0)= (w , - B w v) * ((v, 0) : Heisenberg B) :=by    simp [Heisenberg.mul_def]
   simp [this]
@@ -220,11 +211,9 @@ def Schrodinger_model := {f : Heisenberg B → ℂ | ∀ h : Heisenberg B, ∀ x
 
 local notation "Sch" => Schrodinger_model B χ
 
-omit [Fintype K] [FiniteDimensional K V] in
 lemma ext (f g : Sch) : (∀ h, f.1 h = g.1 h) → f = g:= by
   intro h; ext; simp [h]
 
-omit [Fintype K] [FiniteDimensional K V] in
 lemma Sch_act_mem (h1 : f ∈ Sch)(h : Heisenberg B) : (fun g => f (h * g)) ∈ Sch := by
   intro h' x
   calc
@@ -234,16 +223,13 @@ lemma Sch_act_mem (h1 : f ∈ Sch)(h : Heisenberg B) : (fun g => f (h * g)) ∈ 
 
 
 
-omit [Fintype K] [FiniteDimensional K V] in
 lemma Sch_add_mem (h1 : f1 ∈  Schrodinger_model B χ) (h2 : f2 ∈ Schrodinger_model B χ): f1 + f2 ∈ Schrodinger_model B χ := by
   simp_all [Schrodinger_model]
   intro a b x y hxy
   rw [← mul_add]
 
-omit [Fintype K] [FiniteDimensional K V] in
 lemma Sch_zero_mem : 0 ∈ Schrodinger_model B χ := by simp [Schrodinger_model]
 
-omit [Fintype K] [FiniteDimensional K V] in
 lemma Sch_smul_mem (r : ℂ ) (f : Heisenberg B → ℂ): f ∈  Schrodinger_model B χ → r • f ∈  Schrodinger_model B χ := by
   intro hf
   simp_all [Schrodinger_model]
@@ -266,3 +252,5 @@ noncomputable instance : Ring  (Module.End ℂ (Schrodinger_model B χ)):= infer
 
 end Schrodinger_Model
 end Schrodinger_Model
+
+variable [Fintype K] [FiniteDimensional K V]

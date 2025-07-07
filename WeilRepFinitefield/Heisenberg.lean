@@ -14,6 +14,15 @@ variable (B : LinearMap.BilinForm K V)
 abbrev Heisenberg (B : LinearMap.BilinForm K V)
  := V × K
 
+abbrev Heisenberg.mk (w : V) (k : K) : Heisenberg B := ⟨w,k⟩
+
+
+@[ext]
+lemma Heisenberg.ext (a b : Heisenberg B) (h1 : a.1 = b.1) (h2 : a.2 = b.2) : a = b := by
+  unfold Heisenberg at *
+  ext <;> assumption
+
+
 instance Heisenberg.coeV : Coe V (Heisenberg B) where
   coe := fun v => ⟨v,0⟩
 
@@ -69,10 +78,10 @@ instance instSemigroup : Semigroup (Heisenberg B) where
   mul_assoc := by
     intro a b c
     repeat rw [mul_def]
-    ext
+    simp
+    constructor
     · simp only [add_assoc]
-    · simp_rw [B.rlinear,B.llinear]
-      abel
+    · abel
 
 
 
@@ -171,9 +180,12 @@ theorem center_is_K_of_nondegenerateB [hnd: NonDegenerate B.toAlt ] : (SubK B) =
   simp [add_comm] at h
   simp [LinearMap.BilinForm.toAlt] at nondege
   specialize nondege x.1
-  exact nondege (by convert h using 1; simp [sub_eq_zero] ; tauto)
+  exact nondege (by convert h using 1; simp [sub_eq_zero] ; tauto
+  )
 
 
+variable {B w x} in
+lemma add_x_dec : (w + x, t)= (Heisenberg.instHMul B |>.hMul) (⟨w , t - B w x⟩ : Heisenberg B)  (⟨x, 0⟩ : Heisenberg B)  := by simp [Heisenberg.mul_def]
 
 end Heisenberg
 
