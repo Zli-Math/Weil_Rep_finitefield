@@ -23,12 +23,27 @@ mul_zero : ∀ x : X, ∀ y : Y,  B_s x.1 y.1 = 0
 
 #check Module.finrank_directSum
 
+variable (X Y : Submodule K V)
+
+
+abbrev _root_.LinearMap.BilinForm.IsIsotropic (B : LinearMap.BilinForm K V) (X : Submodule K V):=
+  ∀ x y : X, B x y = 0
+
+class Polarization  where
+  iota : (X × Y)  ≃ₗ[K] V
+  embed : ∀ x : X, ∀ y: Y, iota ⟨x,y⟩ = x.1+y.1
+  Xisotropic : (B_s).IsIsotropic X
+  Yisotropic : (B_s).IsIsotropic Y
+
+
+/-
 class polarization (X Y: Submodule K V) where
 spanning : ∀ v : V, ∃! (w : (X × Y)), v = w.1 + w.2
 Xisotropic : ∀ x y : X, B_s x y = 0
 Yisotropic : ∀ x y : Y, B_s x y = 0
 XY_directsum : ∀ x : X, ∀ y : Y, B_s x y = 0
 YX_directsum : ∀ y : Y, ∀ x : X, B_s y x = 0
+-/
 
 /-
 variable  (X Y: Submodule K V) (x : X) (y : Y )
@@ -40,15 +55,15 @@ Establish the non-deg
 -/
 
 --χ₀ takes values in {1, -1}
-variable {X Y : Submodule K V} (χ₀ : AddChar K ℂˣ) (hp : polarization B X Y)
+variable {X Y} (hp : Polarization B X Y)
 
 
 
 variable (X) in
-def subXK : @Subgroup (Heisenberg B) (Heisenberg.instGroup B) where
+def subXK : Subgroup (Heisenberg B)  where
   carrier := by
     rw [Heisenberg]
-    exact Set.prod X.carrier Set.univ
+    exact Set.prod hp.ds X Set.univ
   mul_mem' := by
     intro x y h1 h2
     simp_all [Heisenberg.mul_def]
@@ -64,6 +79,8 @@ def subXK : @Subgroup (Heisenberg B) (Heisenberg.instGroup B) where
     simp [Set.prod, Heisenberg.inv_def]
     exact h.1
 
+
+variable  (χ₀ : AddChar K ℂˣ)
 
 def X_coor (w : Heisenberg B) : X := ((hp.1 w.1).choose).1
 def Y_coor (w : Heisenberg B) : Y := ((hp.1 w.1).choose).2

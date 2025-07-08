@@ -189,6 +189,78 @@ lemma add_x_dec : (w + x, t)= (Heisenberg.instHMul B |>.hMul) (⟨w , t - B w x�
 
 end Heisenberg
 
+
+section Polarization
+variable (X Y : Submodule K V)
+
+
+abbrev LinearMap.BilinForm.IsIsotropic (B : LinearMap.BilinForm K V) (X : Submodule K V):=
+  ∀ x y : X, B x y = 0
+
+
+class Polarization  where
+  iota : (X × Y)  ≃ₗ[K] V
+  embed : ∀ x : X, ∀ y: Y, iota ⟨x,y⟩ = x.1+y.1
+  Xisotropic : B.toAlt.IsIsotropic X
+  Yisotropic : B.toAlt.IsIsotropic Y
+
+variable {X Y} (P : Polarization B X Y)
+
+namespace Polarization
+variable {B}
+
+abbrev iota' := P.iota.symm
+
+@[simp]
+lemma sum_coor (v : V) : (P.iota' v).1.1 + (P.iota' v).2.1 = v := by
+  rw [<-P.embed]
+  have : ⟨(P.iota' v).1, (P.iota' v).2⟩ = P.iota' v := rfl
+  simp only [this, LinearEquiv.apply_symm_apply]
+
+
+def X_coor (w : Heisenberg B) : X := (P.iota' w.1) |>.1
+def Y_coor (w : Heisenberg B) : Y := (P.iota' w.1) |>.2
+
+lemma element_XY : ∀ w : Heisenberg B, w = ((P.X_coor w).1 + (P.Y_coor w).1, w.2):= by
+  intro w
+  ext
+  · simp only [Polarization.X_coor, Polarization.Y_coor, Polarization.sum_coor]
+  · rfl
+
+lemma element_of_V_XY : ∀ w : V, w = (P.X_coor w).1 + (P.Y_coor  w).1:= by
+  intro
+  simp [Polarization.X_coor, Polarization.Y_coor, P.sum_coor]
+
+
+lemma coor_linear : ∀ w v, w * v =  ((P.X_coor w).1 + (P.Y_coor w).1 + ((P.X_coor v).1 + (P.Y_coor v).1), w.2 + v.2 + B w.1 v.1 ) := by
+  intro w v
+  simp [Heisenberg.mul_def]
+  have hw := P.element_XY w
+  have hv := P.element_XY v
+  nth_rw 1 [hw, hv]
+
+
+def LinearMap.BilinearForm.toSubgroup (X : Submodule K V) : Subgroup (Heisenberg B)  where
+  carrier := by
+    rw [Heisenberg]
+    exact Set.prod X.carrier  Set.univ
+  mul_mem' := by
+    intro x y h1 h2
+    simp_all [Heisenberg.mul_def]
+    constructor
+    · rw [Set.prod] at h1 h2
+      rw [Set.mem_def] at h1 h2
+      simp [X.add_mem]
+      exact Submodule.add_mem X h1.1 h2.1
+    · simp
+  one_mem' := by simp [Set.prod]
+  inv_mem' := by
+    intro x h
+    simp [Set.prod, Heisenberg.inv_def]
+    exact h.1
+
+end Polarization
+
 end HeisenbergGroup
 
 
