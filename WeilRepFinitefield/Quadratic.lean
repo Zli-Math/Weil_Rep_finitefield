@@ -75,17 +75,16 @@ variable (f : QuadraticForm K V)
 #check f.polarBilin.Nondegenerate
 
 
-class NonDegenerate (B: LinearMap.BilinForm K V ) where
-   nondeg : B.Nondegenerate
+variable (f : QuadraticForm K V)
 
 
 def isNonDegenerate (B : LinearMap.BilinForm K V) := ∀ v , (∀ w , B v w =0) → v = 0
 
-omit [Module K V] in
-lemma NonDegenerate.isNonDegenerate (B : V → V → K) [h : NonDegenerate B] : isNonDegenerate B := h.nondeg
+
+lemma NonDegenerate.isNonDegenerate (B : LinearMap.BilinForm K V) [h : NonDegenerate B] : isNonDegenerate B := h.nondeg
 
 
-def alternatingform (B : V → V → K) : (V → V → K )  := fun v => (fun w => B v w - B w v)
+def alternatingform (B : LinearMap.BilinForm K V) : (V → V → K )  := fun v => (fun w => B v w - B w v)
 
 
 abbrev C : Subgroup (Heisenberg B) := Subgroup.center _
@@ -104,11 +103,11 @@ abbrev SubK : Subgroup (Heisenberg B) where
     simp_all
     simp [inv_def , h]
 
-
+/-
 --Proposition 1.4
-theorem centralextension : (SubK B).carrier ⊆ (C B).carrier := by
+theorem centralextension : (Heisenberg.SubK B).carrier ⊆ (Heisenberg.C B).carrier := by
   intro x h
-  simp [SubK] at h
+  simp [Heisenberg.SubK] at h
   rw [Subgroup.mem_carrier]
   rw [Subgroup.mem_center_iff]
   intro y
@@ -116,18 +115,18 @@ theorem centralextension : (SubK B).carrier ⊆ (C B).carrier := by
   simp [add_comm , h]
 --Subgroup.subgroupOf
 
-theorem center_is_K_of_nondegenerateB [hnd: NonDegenerate (alternatingform B) ] : (SubK B) = (C B) := by
-  have nondege : isNonDegenerate (alternatingform B) := NonDegenerate.isNonDegenerate _
+theorem center_is_K_of_nondegenerateB [hnd: NonDegenerate B ] : (Heisenberg.SubK B) = (Heisenberg.C B) := by
+  have nondege := NonDegenerate.isNonDegenerate B
   ext x
   constructor
-  apply centralextension
+  apply Heisenberg.centralextension
   intro h
-  simp [SubK , C] at h ⊢
+  simp [Heisenberg.SubK , Heisenberg.C] at h ⊢
   rw [Subgroup.mem_center_iff] at h
   simp_rw [mul_def] at h
   simp [add_comm] at h
   simp [isNonDegenerate, alternatingform] at nondege
   specialize nondege x.1
   exact nondege (by convert h using 1; simp [sub_eq_zero] ; tauto)
-
+-/
 end Quadratic_Form

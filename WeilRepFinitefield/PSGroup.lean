@@ -1,4 +1,5 @@
 import Mathlib
+import WeilRepFinitefield.Quadratic
 
 variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V] [Module K V]
 
@@ -13,7 +14,7 @@ section Pseudo_Symplectic_Group
 
 variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V] [Module K V]
 
-variable (B : V → V → K ) --[hnd : NonDegenerate (alternatingform B)]
+variable (B : LinearMap.BilinForm K V) --[hnd : NonDegenerate (alternatingform B)]
 --(nondegenerate_symplectic_form : nondegenerate (alternatingform B))
 
 open Function
