@@ -14,7 +14,14 @@ variable (B : LinearMap.BilinForm K V)
 abbrev Heisenberg (B : LinearMap.BilinForm K V)
  := V × K
 
+
+
 abbrev Heisenberg.mk (w : V) (k : K) : Heisenberg B := ⟨w,k⟩
+
+abbrev LinearMap.BilinForm.hmul (a b : Heisenberg B) : Heisenberg B := ⟨ a.1 + b.1 , a.2 + b.2 + B  a.1  b.1 ⟩
+
+abbrev LinearMap.BilinForm.hmul_def (a b : Heisenberg B) : B.hmul a b = ⟨ a.1 + b.1 , a.2 + b.2 + B  a.1  b.1 ⟩ := rfl
+
 
 
 @[ext]
@@ -67,10 +74,15 @@ lemma B_neg_neg (w v :V) : B w v = B (-w) (-v) := by
   simp only [B.lslinear, B.rslinear]
   simp
 
-instance : HMul (Heisenberg B) (Heisenberg B) (Heisenberg B) where
-  hMul := fun a b => ⟨ a.1 + b.1 , a.2 + b.2 + B  a.1  b.1 ⟩
 
+instance : HMul (Heisenberg B) (Heisenberg B) (Heisenberg B) where
+  hMul := B.hmul
+
+variable {B} in
 lemma mul_def (a b : Heisenberg B) : a * b = ⟨ a.1 + b.1 , a.2+ b.2 + B a.1 b.1 ⟩ := rfl
+
+variable {B} in
+lemma mul_def' (a b : Heisenberg B) : B.hmul a  b = a * b := rfl
 
 
 instance instSemigroup : Semigroup (Heisenberg B) where
@@ -289,9 +301,50 @@ lemma X_coor_add_Y (w : V) (t : K) (y : V) (h : y ∈ Y) : P.X_coor (w+y,t) = P.
   rw [P.X_coor_of_Y h,add_zero]
   rfl
 
+lemma Y_coor_of_X {x : V} {t : K} (h : x ∈ X) : P.Y_coor (x, t) = 0 := by
+  have : (x,t).1 = (⟨x,h⟩  : X) + (0 : Y):= by simp
+  simp [P.coor_of_eq this ]
 
 
-def LinearMap.BilinearForm.toSubgroup (X : Submodule K V) : Subgroup (Heisenberg B)  where
+lemma Y_coor_add_X {w : V} {t : K} {x : V} (h : x ∈ X) : P.Y_coor (w+x,t) = P.Y_coor  (w,t) := by
+  rw [Heisenberg.add_x_dec (B:=B)]
+  have := (P.XY_coor_linear (w:=(w, t - B w x)) (v:=(x, 0))).2
+  norm_cast at this
+  rw [this]
+  rw [P.Y_coor_of_X h,add_zero]
+  rfl
+
+
+lemma element_XY' : ∀ w : Heisenberg B, w = B.hmul (P.Y_coor w |>.1, 0) (P.X_coor w |>.1, w.2 - B  (P.Y_coor w) (P.X_coor w)) := by
+  intro w
+  unfold LinearMap.BilinForm.hmul
+  simp only [add_comm, zero_add, add_sub_cancel]
+  exact P.element_XY w
+
+lemma Y_coor_add_Y (w : V) (t : K) (y : Y) : P.Y_coor (w + y, t) = P.Y_coor (w, t) + y := by
+  have : ((w + y, t) : Heisenberg B) = B.hmul ((w , t - B w y) : Heisenberg B)  ((y, 0) : Heisenberg B) :=
+    by simp [B.hmul_def]
+  rw [this]
+  have := (P.XY_coor_linear (w:=(w, t - B w y)) (v := (y,0))).2
+  norm_cast at this
+  simp_rw [Heisenberg.mul_def',this]
+  have := P.Y_in_Y y 0 (by simp)
+  norm_cast at this
+  rw [this]
+  simp [Y_coor]
+
+lemma XY_coor (w : V) (t : K) : P.X_coor (w, t) = P.X_coor w ∧   P.Y_coor (w, t) = P.Y_coor w := by simp [X_coor, Y_coor]
+
+lemma XY_coor_linear' (w : V) (v : V) : (P.X_coor (w + v, 0) : V)= P.X_coor w + P.X_coor  v ∧ (P.Y_coor (w + v, 0) : V) = P.Y_coor w + P.Y_coor v := by
+  have : (w + v, 0)= B.hmul (w , - B w v)  ((v, 0) : Heisenberg B) :=by    simp [Heisenberg.mul_def]
+  simp [this]
+  have := P.XY_coor_linear (w:=(w, -B w v)) (v:=(v, 0))
+  exact this
+
+
+end Polarization
+
+def LinearMap.BilinForm.toSubgroup (X : Submodule K V) : Subgroup (Heisenberg B)  where
   carrier := by
     rw [Heisenberg]
     exact Set.prod X.carrier  Set.univ
@@ -309,8 +362,6 @@ def LinearMap.BilinearForm.toSubgroup (X : Submodule K V) : Subgroup (Heisenberg
     intro x h
     simp [Set.prod, Heisenberg.inv_def]
     exact h.1
-
-end Polarization
 
 end Polarization
 
