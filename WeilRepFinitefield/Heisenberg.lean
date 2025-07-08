@@ -261,6 +261,8 @@ def LinearMap.BilinearForm.toSubgroup (X : Submodule K V) : Subgroup (Heisenberg
 
 end Polarization
 
+end Polarization
+
 end HeisenbergGroup
 
 
