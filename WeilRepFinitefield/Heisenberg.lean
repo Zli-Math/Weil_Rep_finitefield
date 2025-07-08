@@ -221,6 +221,8 @@ lemma sum_coor (v : V) : (P.iota' v).1.1 + (P.iota' v).2.1 = v := by
 def X_coor (w : Heisenberg B) : X := (P.iota' w.1) |>.1
 def Y_coor (w : Heisenberg B) : Y := (P.iota' w.1) |>.2
 
+
+
 lemma element_XY : ∀ w : Heisenberg B, w = ((P.X_coor w).1 + (P.Y_coor w).1, w.2):= by
   intro w
   ext
@@ -231,6 +233,17 @@ lemma element_of_V_XY : ∀ w : V, w = (P.X_coor w).1 + (P.Y_coor  w).1:= by
   intro
   simp [Polarization.X_coor, Polarization.Y_coor, P.sum_coor]
 
+lemma coor_of_eq : ∀ w , ∀ x : X, ∀ y : Y,  (w.1  = x.1 + y.1) → (P.X_coor w) = x ∧ P.Y_coor w = y := by
+  intro w x y hw
+  have H:= P.element_XY w
+  rw [H] at hw
+  simp only [<-P.embed ] at hw
+  apply_fun P.iota.symm at hw
+  simp only [LinearEquiv.symm_apply_apply, Prod.mk.injEq] at hw
+  exact hw
+
+
+
 
 lemma coor_linear : ∀ w v, w * v =  ((P.X_coor w).1 + (P.Y_coor w).1 + ((P.X_coor v).1 + (P.Y_coor v).1), w.2 + v.2 + B w.1 v.1 ) := by
   intro w v
@@ -238,6 +251,20 @@ lemma coor_linear : ∀ w v, w * v =  ((P.X_coor w).1 + (P.Y_coor w).1 + ((P.X_c
   have hw := P.element_XY w
   have hv := P.element_XY v
   nth_rw 1 [hw, hv]
+
+
+lemma XY_coor_linear : ∀ w v, (P.X_coor (w * v)).1 = (P.X_coor w).1 + (P.X_coor  v).1 ∧ (P.Y_coor  (w * v)).1 = (P.Y_coor w).1 + (P.Y_coor v).1 := by
+  intro w v
+  have hwv := P.coor_linear w v
+  have hwv1 : (w * v).1 = ((P.X_coor w).1 + ((P.X_coor v).1) + ((P.Y_coor w).1  + (P.Y_coor v).1)) := by
+    simp [hwv]
+    rw [add_assoc, ← add_assoc (P.Y_coor w).1, add_comm  (P.Y_coor w).1, add_assoc (P.X_coor v).1, ← add_assoc]
+  simp only [<-Submodule.coe_add,Subtype.coe_inj]
+  apply coor_of_eq
+  simp only [hwv1, Submodule.coe_add]
+
+
+
 
 
 def LinearMap.BilinearForm.toSubgroup (X : Submodule K V) : Subgroup (Heisenberg B)  where
