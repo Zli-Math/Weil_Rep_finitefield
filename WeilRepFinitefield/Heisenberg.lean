@@ -221,7 +221,11 @@ lemma sum_coor (v : V) : (P.iota' v).1.1 + (P.iota' v).2.1 = v := by
 def X_coor (w : Heisenberg B) : X := (P.iota' w.1) |>.1
 def Y_coor (w : Heisenberg B) : Y := (P.iota' w.1) |>.2
 
+lemma X_coor_same_w : P.X_coor (w,t) = P.X_coor (w,t') := by
+  rfl
 
+lemma Y_coor_same_w : P.Y_coor (w,t) = P.Y_coor (w,t') := by
+  rfl
 
 lemma element_XY : ∀ w : Heisenberg B, w = ((P.X_coor w).1 + (P.Y_coor w).1, w.2):= by
   intro w
@@ -233,7 +237,7 @@ lemma element_of_V_XY : ∀ w : V, w = (P.X_coor w).1 + (P.Y_coor  w).1:= by
   intro
   simp [Polarization.X_coor, Polarization.Y_coor, P.sum_coor]
 
-lemma coor_of_eq : ∀ w , ∀ x : X, ∀ y : Y,  (w.1  = x.1 + y.1) → (P.X_coor w) = x ∧ P.Y_coor w = y := by
+lemma coor_of_eq : ∀ {w} , ∀ {x : X}, ∀ {y : Y},  (w.1  = x.1 + y.1) → (P.X_coor w) = x ∧ P.Y_coor w = y := by
   intro w x y hw
   have H:= P.element_XY w
   rw [H] at hw
@@ -253,7 +257,7 @@ lemma coor_linear : ∀ w v, w * v =  ((P.X_coor w).1 + (P.Y_coor w).1 + ((P.X_c
   nth_rw 1 [hw, hv]
 
 
-lemma XY_coor_linear : ∀ w v, (P.X_coor (w * v)).1 = (P.X_coor w).1 + (P.X_coor  v).1 ∧ (P.Y_coor  (w * v)).1 = (P.Y_coor w).1 + (P.Y_coor v).1 := by
+lemma XY_coor_linear : ∀ {w v}, (P.X_coor (w * v)).1 = (P.X_coor w).1 + (P.X_coor  v).1 ∧ (P.Y_coor  (w * v)).1 = (P.Y_coor w).1 + (P.Y_coor v).1 := by
   intro w v
   have hwv := P.coor_linear w v
   have hwv1 : (w * v).1 = ((P.X_coor w).1 + ((P.X_coor v).1) + ((P.Y_coor w).1  + (P.Y_coor v).1)) := by
@@ -263,7 +267,27 @@ lemma XY_coor_linear : ∀ w v, (P.X_coor (w * v)).1 = (P.X_coor w).1 + (P.X_coo
   apply coor_of_eq
   simp only [hwv1, Submodule.coe_add]
 
+lemma X_in_X (w : V) (t : K) (h : w ∈ X) : P.X_coor (w, t) = w := by
+  have : (w,t).1 = (⟨w,h⟩ : X) + (0 : Y):= by simp
+  simp [P.coor_of_eq this ]
 
+lemma Y_in_Y (w : V) (t : K) (h : w ∈ Y) : P.Y_coor  (w, t) = w := by
+  have : (w,t).1 = (0 : X) + (⟨w,h⟩  : Y):= by simp
+  simp [P.coor_of_eq this ]
+
+
+lemma X_coor_of_Y {y : V} {t : K} (h : y ∈ Y) : P.X_coor (y, t) = 0 := by
+  have : (y,t).1 = (0 : X) + (⟨y,h⟩  : Y):= by simp
+  simp [P.coor_of_eq this ]
+
+
+lemma X_coor_add_Y (w : V) (t : K) (y : V) (h : y ∈ Y) : P.X_coor (w+y,t) = P.X_coor (w,t) := by
+  have := (P.XY_coor_linear (w := (w, t - B w y)) (v:=(y, 0))).1
+  norm_cast at this
+  rw [<-Heisenberg.add_x_dec] at this
+  rw [this]
+  rw [P.X_coor_of_Y h,add_zero]
+  rfl
 
 
 
