@@ -1,51 +1,49 @@
 import Mathlib
 --import WeilRepFinitefield.HeisenbergRepresentation
-import WeilRepFinitefield.Schrodinger_Model
-import WeilRepFinitefield.PSGroup
+import WeilRepFinitefield.HeisenbergRepresentation
+import WeilRepFinitefield.PseudoSymplecticGroup
 
 open Module
 open BigOperators
-open Heisenberg pseudo_symplectic Sp Schrodinger_Model
+open Schrodinger_Model
 open Finset Fintype
 open Classical
 
-variable {K : Type } [Field K] [Fintype K] {V : Type } [Fintype V]  [AddCommGroup V] [Module K V] [FiniteDimensional K V] [Nonempty V] [char2: CharP K 2]
+variable {K : Type } [Field K]  {V : Type }  [AddCommGroup V] [Module K V] {R : Type*} [Field R]
+variable (B : LinearMap.BilinForm K V)
 
-variable {B : V → V → K} [IsBilinear B]
-variable [hnd : NonDegenerate (alternatingform B)]
+local notation3 "⟪" a:40 "," b:40 "⟫" => (B.toAlt) a b
 
-local notation3 "⟪" a:40 "," b:40 "⟫" => (alternatingform B) a b
+variable {X Y : Submodule K V} (χ₀ : AddChar K R) (P : B.Polarization X Y)
+variable (h : B.Heisenberg)
 
-variable {X Y : Submodule K V} (χ₀ : AddChar K ℂˣ) (hp : polarization B X Y)
-variable (h : Heisenberg B)
+variable (χ : (B.toSubgroup X) →* Rˣ) [isextendchara : extendcharacter B χ₀ χ]
 
-variable (χ : (subXK B (X := X)) →* ℂˣ) [isextendchara : extendcharacter B χ₀ χ]
-
-variable (σ : Sp B)
-variable (s : Ps B)
+variable (σ : B.Sp)
+variable (s : B.Ps)
 variable (v w : V)
 
-omit [Fintype K] [Fintype V] [FiniteDimensional K V] [Nonempty V] char2 hnd in
-lemma llinear_form : ∀ w v r, ⟪w + r, v⟫ = ⟪w, v⟫ + ⟪r, v⟫ := by
+@[simp]
+lemma LinearMap.BilinForm.toAlt.llinear_form : ∀ w v r, ⟪w + r, v⟫ = ⟪w, v⟫ + ⟪r, v⟫ := by
   intro w v r
-  simp [alternatingform, IsBilinear.llinear, IsBilinear.rlinear]
-  ring
+  simp only [LinearMap.sub_apply, map_add, LinearMap.add_apply, LinearMap.BilinForm.flip_apply]
 
-omit [Fintype K] [Fintype V] [FiniteDimensional K V] [Nonempty V] char2 hnd in
-lemma rlinear_form : ∀ w v r, ⟪w, v + r⟫ = ⟪w, v⟫ + ⟪w, r⟫ := by
+@[simp]
+lemma LinearMap.BilinForm.toAlt.rlinear_form : ∀ w v r, ⟪w, v + r⟫ = ⟪w, v⟫ + ⟪w, r⟫ := by
   intro w v r
-  simp [alternatingform, IsBilinear.llinear, IsBilinear.rlinear]
-  ring
-
-#check ⟪v,w⟫
-
-noncomputable section
-
-local notation "ρ" => (rhoY hp χ)
+  simp only [LinearMap.sub_apply, map_add, flip_apply, LinearMap.add_apply]
 
 
-abbrev omega_aux : End ℂ (Ymodel hp) :=
-  ∑ (v : V) , ρ ((s • v : Heisenberg B)⁻¹ * (w) * v)
+section
+
+variable [Fintype K] [Fintype V] [FiniteDimensional K V] [Nonempty V] [char2: CharP K 2]
+
+
+local notation "ρ" => (P.rhoY χ)
+
+
+abbrev omega_aux : End R (P.Ymodel R) :=
+  ∑ (v : V) , ρ ((s • v : B.Heisenberg)⁻¹ * (w) * v)
 
 
 

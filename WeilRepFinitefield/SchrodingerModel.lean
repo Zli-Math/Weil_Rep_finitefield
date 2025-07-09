@@ -4,7 +4,8 @@ import WeilRepFinitefield.Heisenberg
 
 noncomputable section Schrodinger_Model
 
-open Heisenberg Function
+open Function
+open LinearMap.BilinForm
 
 
 namespace  Schrodinger_Model
@@ -23,25 +24,25 @@ mul_zero : ∀ x : X, ∀ y : Y,  B_s x.1 y.1 = 0
 
 #check Module.finrank_directSum
 
-variable {X Y : Submodule K V} (hp : Polarization B X Y)
+variable {X Y : Submodule K V} (hp : B.Polarization X Y)
 variable {R : Type*} [Field R]
 
 variable  (χ₀ : AddChar K R)
 
 class extendcharacter (χ : (B.toSubgroup X)→* Rˣ) where
-  equalχ₀ : ∀ y, χ ⟨(0, y), by simp [LinearMap.BilinForm.toSubgroup,Set.prod] ⟩ = χ₀ y
+  equalχ₀ : ∀ y, χ ⟨(0, y), by simp [LinearMap.BilinForm.Heisenberg,LinearMap.BilinForm.toSubgroup,Set.prod] ⟩ = χ₀ y
 --χ takes values in {1, -1, i, -i}
 
 variable (χ : (B.toSubgroup X) →* Rˣ) [isextendchara : extendcharacter B χ₀ χ] (x : X)
 
-def Schrodinger_model := {f : Heisenberg B → R | ∀ h : Heisenberg B, ∀ x: B.toSubgroup X ,f (h * x) = (χ x)⁻¹ * f (h)}
+def Schrodinger_model := {f : B.Heisenberg → R | ∀ h : B.Heisenberg, ∀ x: B.toSubgroup X ,f (h * x) = (χ x)⁻¹ * f (h)}
 
 local notation "Sch" => Schrodinger_model B χ
 
 lemma ext (f g : Sch) : (∀ h, f.1 h = g.1 h) → f = g:= by
   intro h; ext; simp [h]
 
-lemma Sch_act_mem (h1 : f ∈ Sch)(h : Heisenberg B) : (fun g => f (h * g)) ∈ Sch := by
+lemma Sch_act_mem (h1 : f ∈ Sch)(h : B.Heisenberg) : (fun g => f (h * g)) ∈ Sch := by
   intro h' x
   calc
   _ =  f (h * (h' *x)) := by rfl
@@ -49,19 +50,19 @@ lemma Sch_act_mem (h1 : f ∈ Sch)(h : Heisenberg B) : (fun g => f (h * g)) ∈ 
   _ = (χ x)⁻¹ * f (h * h') := h1 (h * h') x
 
 lemma Sch_add_mem (h1 : f1 ∈  Schrodinger_model B χ) (h2 : f2 ∈ Schrodinger_model B χ): f1 + f2 ∈ Schrodinger_model B χ := by
-  simp_all [Schrodinger_model]
+  simp_all [Heisenberg,Schrodinger_model]
   intro a b x y hxy
   rw [← mul_add]
 
 lemma Sch_zero_mem : 0 ∈ Schrodinger_model B χ := by simp [Schrodinger_model]
 
-lemma Sch_smul_mem (r : R ) (f : Heisenberg B → R): f ∈  Schrodinger_model B χ → r • f ∈  Schrodinger_model B χ := by
+lemma Sch_smul_mem (r : R ) (f : B.Heisenberg → R): f ∈  Schrodinger_model B χ → r • f ∈  Schrodinger_model B χ := by
   intro hf
-  simp_all [Schrodinger_model]
+  simp_all [Heisenberg,Schrodinger_model]
   intro a b x y hxy
   simp [mul_assoc, mul_comm]
 
-instance instSubmodule: Submodule R (Heisenberg B → R) where
+instance instSubmodule: Submodule R (B.Heisenberg → R) where
   carrier := Schrodinger_model B χ
   add_mem' := Sch_add_mem B χ
   zero_mem' := Sch_zero_mem B χ

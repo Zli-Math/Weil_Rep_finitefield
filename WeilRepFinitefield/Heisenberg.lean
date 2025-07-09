@@ -11,12 +11,17 @@ variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V][Module K V]
 
 variable (B : LinearMap.BilinForm K V)
 
-abbrev LinearMap.BilinForm.Heisenberg (B : LinearMap.BilinForm K V)
+def LinearMap.BilinForm.Heisenberg (B : LinearMap.BilinForm K V)
  := V × K
 
 open LinearMap.BilinForm
 
 namespace LinearMap.BilinForm
+
+instance instDecidableEq [DecidableEq V] [DecidableEq K] : DecidableEq B.Heisenberg := by
+  unfold Heisenberg
+  infer_instance
+
 abbrev Heisenberg.mk (w : V) (k : K) : B.Heisenberg := ⟨w,k⟩
 
 abbrev hmul (a b : B.Heisenberg) : B.Heisenberg := ⟨ a.1 + b.1 , a.2 + b.2 + B  a.1  b.1 ⟩
@@ -41,7 +46,6 @@ class IsBilinear (B : V →  V → K) where
   lslinear: ∀ (r : K) (w v : V) , B (r • w) v = r * B w v
   rslinear: ∀ (r : K) (w v : V) , B w (r • v) = r * B w v
 
-namespace LinearMap.BilinForm
 lemma  llinear : ∀ r w v , B (r + w) v =  B r v + B w v := by simp
 lemma  rlinear : ∀ r w v , B w (r + v) = B w r + B w v := by simp
 lemma  lslinear: ∀ (r : K) (w v : V) , B (r • w) v = r * B w v := by simp
@@ -52,9 +56,6 @@ abbrev toAlt := B - B.flip
 
 lemma toAlt_isAlt : B.toAlt.IsAlt := by intro; simp
 
-
-
-end LinearMap.BilinForm
 
 section NonDegenerate
 
@@ -82,6 +83,7 @@ instance : HMul (Heisenberg B) (Heisenberg B) (Heisenberg B) where
 variable {B} in
 lemma mul_def (a b : Heisenberg B) : a * b = ⟨ a.1 + b.1 , a.2+ b.2 + B a.1 b.1 ⟩ := rfl
 
+
 variable {B} in
 lemma mul_def' (a b : Heisenberg B) : B.hmul a  b = a * b := rfl
 
@@ -91,7 +93,7 @@ instance instSemigroup : Semigroup (Heisenberg B) where
   mul_assoc := by
     intro a b c
     repeat rw [mul_def]
-    simp
+    simp only [Heisenberg, map_add, LinearMap.add_apply, Prod.mk.injEq]
     constructor
     · simp only [add_assoc]
     · abel
@@ -167,7 +169,7 @@ abbrev SubK : Subgroup (Heisenberg B) where
   inv_mem' := by
     intro x h
     simp_all
-    simp [inv_def , h]
+    simp only [inv_def, neg_eq_zero,h]
 
 
 --Proposition 1.4
@@ -193,7 +195,13 @@ theorem center_is_K_of_nondegenerateB [hnd: NonDegenerate B.toAlt ] : (SubK B) =
   simp [add_comm] at h
   simp [LinearMap.BilinForm.toAlt] at nondege
   specialize nondege x.1
-  exact nondege (by convert h using 1; simp [sub_eq_zero] ; tauto
+  exact nondege (by
+    convert h using 1
+    simp only [LinearMap.sub_apply, flip_apply, sub_eq_zero,
+    Heisenberg, Prod.mk.injEq, add_right_inj, true_and, Prod.forall, forall_const];
+    constructor
+    · intro H a; rw [H a]
+    · intro H a; rw [H a]
   )
 
 
@@ -264,7 +272,7 @@ lemma coor_of_eq : ∀ {w} , ∀ {x : X}, ∀ {y : Y},  (w.1  = x.1 + y.1) → (
 
 lemma coor_linear : ∀ w v, w * v =  ((P.X_coor w).1 + (P.Y_coor w).1 + ((P.X_coor v).1 + (P.Y_coor v).1), w.2 + v.2 + B w.1 v.1 ) := by
   intro w v
-  simp [Heisenberg.mul_def]
+  simp only [Heisenberg.mul_def]
   have hw := P.element_XY w
   have hv := P.element_XY v
   nth_rw 1 [hw, hv]
@@ -274,7 +282,7 @@ lemma XY_coor_linear : ∀ {w v}, (P.X_coor (w * v)).1 = (P.X_coor w).1 + (P.X_c
   intro w v
   have hwv := P.coor_linear w v
   have hwv1 : (w * v).1 = ((P.X_coor w).1 + ((P.X_coor v).1) + ((P.Y_coor w).1  + (P.Y_coor v).1)) := by
-    simp [hwv]
+    simp only [hwv]
     rw [add_assoc, ← add_assoc (P.Y_coor w).1, add_comm  (P.Y_coor w).1, add_assoc (P.X_coor v).1, ← add_assoc]
   simp only [<-Submodule.coe_add,Subtype.coe_inj]
   apply coor_of_eq
@@ -286,12 +294,12 @@ lemma X_in_X (w : V) (t : K) (h : w ∈ X) : P.X_coor (w, t) = w := by
 
 lemma Y_in_Y (w : V) (t : K) (h : w ∈ Y) : P.Y_coor  (w, t) = w := by
   have : (w,t).1 = (0 : X) + (⟨w,h⟩  : Y):= by simp
-  simp [P.coor_of_eq this ]
+  simp only [P.coor_of_eq this]
 
 
 lemma X_coor_of_Y {y : V} {t : K} (h : y ∈ Y) : P.X_coor (y, t) = 0 := by
   have : (y,t).1 = (0 : X) + (⟨y,h⟩  : Y):= by simp
-  simp [P.coor_of_eq this ]
+  simp only [P.coor_of_eq this]
 
 
 lemma X_coor_add_Y (w : V) (t : K) (y : V) (h : y ∈ Y) : P.X_coor (w+y,t) = P.X_coor (w,t) := by
@@ -304,7 +312,7 @@ lemma X_coor_add_Y (w : V) (t : K) (y : V) (h : y ∈ Y) : P.X_coor (w+y,t) = P.
 
 lemma Y_coor_of_X {x : V} {t : K} (h : x ∈ X) : P.Y_coor (x, t) = 0 := by
   have : (x,t).1 = (⟨x,h⟩  : X) + (0 : Y):= by simp
-  simp [P.coor_of_eq this ]
+  simp only [P.coor_of_eq this]
 
 
 lemma Y_coor_add_X {w : V} {t : K} {x : V} (h : x ∈ X) : P.Y_coor (w+x,t) = P.Y_coor  (w,t) := by
@@ -324,7 +332,7 @@ lemma element_XY' : ∀ w : Heisenberg B, w = B.hmul (P.Y_coor w |>.1, 0) (P.X_c
 
 lemma Y_coor_add_Y (w : V) (t : K) (y : Y) : P.Y_coor (w + y, t) = P.Y_coor (w, t) + y := by
   have : ((w + y, t) : Heisenberg B) = B.hmul ((w , t - B w y) : Heisenberg B)  ((y, 0) : Heisenberg B) :=
-    by simp [B.hmul_def]
+    by simp only [B.hmul_def, add_zero, sub_add_cancel]
   rw [this]
   have := (P.XY_coor_linear (w:=(w, t - B w y)) (v := (y,0))).2
   norm_cast at this
@@ -338,14 +346,14 @@ lemma XY_coor (w : V) (t : K) : P.X_coor (w, t) = P.X_coor w ∧   P.Y_coor (w, 
 
 lemma XY_coor_linear' (w : V) (v : V) : (P.X_coor (w + v, 0) : V)= P.X_coor w + P.X_coor  v ∧ (P.Y_coor (w + v, 0) : V) = P.Y_coor w + P.Y_coor v := by
   have : (w + v, 0)= B.hmul (w , - B w v)  ((v, 0) : Heisenberg B) :=by    simp [Heisenberg.mul_def]
-  simp [this]
+  simp only [this]
   have := P.XY_coor_linear (w:=(w, -B w v)) (v:=(v, 0))
   exact this
 
 
 end Polarization
 
-def LinearMap.BilinForm.toSubgroup (X : Submodule K V) : Subgroup (Heisenberg B)  where
+def toSubgroup (X : Submodule K V) : Subgroup (Heisenberg B)  where
   carrier := by
     rw [Heisenberg]
     exact Set.prod X.carrier  Set.univ
@@ -355,14 +363,25 @@ def LinearMap.BilinForm.toSubgroup (X : Submodule K V) : Subgroup (Heisenberg B)
     constructor
     · rw [Set.prod] at h1 h2
       rw [Set.mem_def] at h1 h2
-      simp [X.add_mem]
+      simp only [AddSubsemigroup.mem_carrier, AddSubmonoid.mem_toSubsemigroup,
+        Submodule.mem_toAddSubmonoid]
       exact Submodule.add_mem X h1.1 h2.1
     · simp
-  one_mem' := by simp [Set.prod]
+  one_mem' := by simp [Heisenberg,Set.prod]
   inv_mem' := by
-    intro x h
-    simp [Set.prod, Heisenberg.inv_def]
-    exact h.1
+    rintro ⟨v,k⟩  h
+    simp only [Heisenberg, Set.prod, AddSubsemigroup.mem_carrier, AddSubmonoid.mem_toSubsemigroup,
+      Submodule.mem_toAddSubmonoid, Set.mem_univ, and_true, eq_mpr_eq_cast, cast_eq,
+      Set.mem_setOf_eq]
+    rw [Heisenberg.inv_def]
+    replace h:= h.1
+    simp at h
+    simp [neg_mem_iff,h]
+
+
+
+
+
 
 end Polarization
 
