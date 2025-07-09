@@ -95,8 +95,15 @@ abbrev LinearMap.BilinForm.associated (σ :V≃ₗ[K] V ) (f : QuadraticForm K V
 abbrev LinearMap.BilinForm.Ps :=
   {σ : (V≃ₗ[K] V) × (QuadraticForm K V) // B.associated σ.1 σ.2}
 
-abbrev LinearMap.BilinForm.Ps.σ (a : B.Ps):= a.1.1
-abbrev LinearMap.BilinForm.Ps.f (a : B.Ps):= a.1.2
+
+namespace LinearMap.BilinForm.Ps
+
+variable {B} in
+abbrev σ (a : B.Ps):= a.1.1
+variable {B} in
+abbrev f (a : B.Ps):= a.1.2
+
+
 
 lemma comp_associatedB  (a b : B.Ps) : ∀ w v, QuadraticMap.polar (b.f + ((a.f).comp (b.σ).toLinearMap)) w v = B ((a.σ * b.σ) w) ((a.σ * b.σ) v) - B w v := by
   sorry
@@ -109,14 +116,13 @@ lemma comp_associatedB  (a b : B.Ps) : ∀ w v, QuadraticMap.polar (b.f + ((a.f)
   linear_combination h1 + h2
   -/
 
-instance : HMul (B.Ps)  (B.Ps) (B.Ps) where
+instance instHMul: HMul (B.Ps)  (B.Ps) (B.Ps) where
   hMul := fun a b =>  ⟨ ((a.σ) * (b.σ), b.f + ((a.f).comp  (b.σ).toLinearMap)), comp_associatedB B a b⟩
 
-end PS_Group
 
-lemma  mul_def (a b : Ps B) : a * b = ⟨a.1 * b.1, b.f + a.f ∘ b.1, add_quadraticform (b.2) (a.2 ∘ b.1.1) (b.3) (comp_quadraricform B a.2 b.1 a.3), comp_associatedB B a b⟩:= rfl
+lemma  mul_def (a b : B.Ps) : a * b = ⟨ ((a.σ) * (b.σ), b.f + ((a.f).comp  (b.σ).toLinearMap)), comp_associatedB B a b⟩ := by rfl
 
-instance instSemigroup : Semigroup (Ps B) where
+instance instSemigroup : Semigroup (B.Ps) where
   mul := HMul.hMul
   mul_assoc := by
     intro a b c
@@ -124,53 +130,33 @@ instance instSemigroup : Semigroup (Ps B) where
     constructor
     · rfl
     · ext x
-      simp [add_assoc]
-
-variable {B} in
-lemma neg_comp_quadratic (σ : Sp B) {f : V → K} (h : Quadraticform f) : Quadraticform ((-f) ∘ (σ)) := by
-  constructor
-  · constructor
-    · intro r w v
-      simp [form]
-      have h := h.bilinear.llinear (σ r) (σ w) (σ v)
-      simp [form,<-Sp.linear] at h
-      linear_combination -h
-    · intro r w v
-      simp [form]
-      have h := h.bilinear.rlinear (σ r) (σ w) (σ v)
-      simp [form,<-Sp.linear] at h
-      linear_combination -h
-    · intro r w v
-      simp [form, Sp.linear, Sp.slinear]
-      have h := h.bilinear.lslinear r (σ w) (σ v)
-      simp_all [form]
-      linear_combination -h
-    · intro r w v
-      simp [form, Sp.linear, Sp.slinear]
-      have h := h.bilinear.rslinear r (σ w) (σ v)
-      simp_all [form]
-      linear_combination -h
-  · intro t v
-    simp [h.sq_smul,Sp.slinear]
+      simp only [f, σ, QuadraticMap.add_apply, QuadraticMap.comp_apply, LinearEquiv.coe_coe,
+        LinearEquiv.coe_toLinearMap_mul, mul_apply]
+      ring_nf
 
 
-
-variable {B} in
-lemma inv_associatedB (σ : Sp B) {f : V → K} (hB : ∀ w v, form f  w v = B (σ w) (σ v) - B w v ): ∀ w v, form ((-f) ∘ (σ⁻¹:Sp B)) w v = B (σ⁻¹ w) (σ⁻¹ v) - B w v := by
+lemma inv_associated (σ : V ≃ₗ[K] V) (f : QuadraticForm K V) (hB : B.associated σ  f) : B.associated σ.symm ((-f).comp (σ.symm).toLinearMap) := by
   intro w v
-  simp [form,linear]
-  have h := hB (σ⁻¹ w) (σ⁻¹ v)
-  rw [form] at h
-  simp only [<-Sp.map_mul,mul_inv_cancel, Sp.map_one] at h
+  have h := @hB (σ.symm w) (σ.symm v)
+  simp only [QuadraticMap.polar, QuadraticMap.comp_apply, LinearEquiv.coe_coe, map_add,
+    QuadraticMap.neg_apply, sub_neg_eq_add]
+  simp only [QuadraticMap.polar, LinearEquiv.apply_symm_apply] at h
   linear_combination - h
 
-instance  instInv: Inv  (Ps B) where
-   inv := fun a => ⟨a.σ⁻¹ , (- a.f) ∘ (a.σ⁻¹ : Sp B) , neg_comp_quadratic (a.σ⁻¹) a.Quaf, inv_associatedB a.σ a.associatedB⟩
+instance  instInv: Inv  (B.Ps) where
+   inv := fun a => ⟨((a.σ).symm , (- a.f).comp  (a.σ).symm)  , inv_associated B a.σ a.f a.2⟩
+
+lemma inv_def (a : B.Ps) : a⁻¹ = ⟨((a.σ).symm , (- a.f).comp  (a.σ).symm) , inv_associated B a.σ a.f a.2⟩
+:= rfl
+
+
+
+end LinearMap.BilinForm.Ps
+
+end PS_Group
+
 
 --omit hnd in
-lemma inv_def (a : Ps B) : a⁻¹ =
-⟨a.σ⁻¹ , (- a.f) ∘ (a.σ⁻¹ : Sp B) , neg_comp_quadratic (a.σ⁻¹) a.Quaf, inv_associatedB a.σ a.associatedB⟩ := rfl
-
 
 lemma one_quadraticform : Quadraticform (0 : V → K) := by
   constructor
