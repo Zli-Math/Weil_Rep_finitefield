@@ -24,6 +24,17 @@ instance instDecidableEq [DecidableEq V] [DecidableEq K] : DecidableEq B.Heisenb
 
 abbrev Heisenberg.mk (w : V) (k : K) : B.Heisenberg := ⟨w,k⟩
 
+instance instCoeHeisenbergV : Coe V B.Heisenberg where
+  coe := fun v => ⟨v,0⟩
+
+instance instCoeHeisenbergK : Coe K B.Heisenberg where
+  coe := fun k => ⟨0,k⟩
+
+/-
+variable (v : V) (k : K)
+#check (v : B.Heisenberg)
+-/
+
 abbrev hmul (a b : B.Heisenberg) : B.Heisenberg := ⟨ a.1 + b.1 , a.2 + b.2 + B  a.1  b.1 ⟩
 
 abbrev hmul_def (a b : Heisenberg B) : B.hmul a b = ⟨ a.1 + b.1 , a.2 + b.2 + B  a.1  b.1 ⟩ := rfl
@@ -77,7 +88,7 @@ lemma B_neg_neg (w v :V) : B w v = B (-w) (-v) := by
   simp
 
 
-instance : HMul (Heisenberg B) (Heisenberg B) (Heisenberg B) where
+instance instHMul: HMul (Heisenberg B) (Heisenberg B) (Heisenberg B) where
   hMul := B.hmul
 
 variable {B} in

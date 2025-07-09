@@ -41,15 +41,16 @@ variable [Fintype K] [Fintype V] [FiniteDimensional K V] [Nonempty V] [char2: Ch
 
 local notation "ρ" => (P.rhoY χ)
 
-
+#check ρ
 abbrev omega_aux : End R (P.Ymodel R) :=
-  ∑ (v : V) , ρ ((s • v : B.Heisenberg)⁻¹ * (w) * v)
+  ∑ (v : V) , (ρ  $ ((B.instSmul.smul s  (v : B.Heisenberg))⁻¹ ) * (w : B.Heisenberg)
+  )
 
 
 
 abbrev Ws := {v | ∀ w, s.σ w = w → χ₀ (s.f w) = χ₀  ⟪v,w⟫}
 
-lemma Ws.nonempty : Nonempty (Ws χ₀ s) := by sorry
+lemma Ws.nonempty : Nonempty (B.Ws χ₀ s) := by sorry
 
 def ws := Nonempty.some $ Ws.nonempty χ₀ s
 

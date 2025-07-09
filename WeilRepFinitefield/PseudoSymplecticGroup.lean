@@ -208,8 +208,15 @@ inv_mul_cancel := by
 end LinearMap.BilinForm.Ps
 
 section Ps_action_on_Heisenberg
-instance instSmul : SMul (B.Ps) (B.Heisenberg) where
-  smul := fun s h => (s.σ h.1, s.f h.1 + h.2)
+
+variable {B} in
+abbrev LinearMap.BilinForm.Ps.smul (s : B.Ps) (h : B.Heisenberg): B.Heisenberg := (s.σ h.1, s.f h.1 + h.2)
+
+instance LinearMap.BilinForm.instSmul : SMul (B.Ps) (B.Heisenberg) where
+  smul := fun s h => s.smul h
+
+#synth HSMul (B.Ps) (B.Heisenberg) (B.Heisenberg)
+#synth HSMul (B.Ps) (V×K) (V×K)
 
 @[simp]
 lemma LinearMap.BilinForm.Ps.smul_def (s : B.Ps) (h : B.Heisenberg) : s • h =  (s.σ h.1, s.f h.1 + h.2) := by rfl
@@ -226,6 +233,7 @@ instance instMulAction : MulAction (B.Ps) (B.Heisenberg) where
     simp only [LinearMap.BilinForm.Ps.mul_def, LinearMap.BilinForm.Ps.smul_def,
       LinearMap.BilinForm.Ps.σ_def, LinearEquiv.mul_apply, LinearMap.BilinForm.Ps.f_def,
       QuadraticMap.add_apply, QuadraticMap.comp_apply, LinearEquiv.coe_coe, Prod.mk.injEq, true_and,add_comm,add_assoc]
+
 
 
 end Ps_action_on_Heisenberg
