@@ -36,30 +36,49 @@ lemma LinearMap.BilinForm.toAlt.rlinear_form : ∀ w v r, ⟪w, v + r⟫ = ⟪w,
 
 section
 
-variable [Fintype K] [Fintype V] [FiniteDimensional K V] [Nonempty V] [char2: CharP K 2]
-
 
 local notation "ρ" => (P.rhoY χ)
 
 #check ρ
-abbrev omega_aux : End R (P.Ymodel R) :=
-  ∑ (v : V) , (ρ  $ ((B.instSmul.smul s  (v : B.Heisenberg))⁻¹ ) * (w : B.Heisenberg)
-  )
+
+variable [Fintype K] [Fintype V] [DecidableEq K][DecidableEq V]
+
+variable {B} in
+abbrev LinearMap.BilinForm.Polarization.omega_aux (s : B.Ps) (w : V): End R (P.Ymodel R) :=
+  ∑ (v : V) , (ρ  $ B.hmul ((B.hmul (s.smul  (v : B.Heisenberg))⁻¹ ) w ) v)
+
+variable {B}
+
+abbrev _root_.LinearMap.BilinForm.Ps.Ws := {v | ∀ w, s.σ w = w → (s.f w) =  ⟪v,w⟫}
+
+lemma _root_.LinearMap.BilinForm.Ps.Ws_nonempty : Nonempty (s.Ws) := by sorry
 
 
+variable [FiniteDimensional K V] [Nonempty V] [char2: CharP K 2]
 
-abbrev Ws := {v | ∀ w, s.σ w = w → χ₀ (s.f w) = χ₀  ⟪v,w⟫}
+/-
+noncomputable section test
 
-lemma Ws.nonempty : Nonempty (B.Ws χ₀ s) := by sorry
+variable (α : Type*) [Fintype α]
 
-def ws := Nonempty.some $ Ws.nonempty χ₀ s
+#synth FinEnum α
 
-abbrev omega : End ℂ (Ymodel hp) := omega_aux hp χ s  (ws χ₀ s)
+end test
+-/
 
-local notation "ω" => (omega χ₀ hp χ)
+variable [FinEnum V]
 
-omit [Fintype K] [Fintype V] [FiniteDimensional K V] [Nonempty V] hnd in
-lemma weq_lemma (H : wₛ ∈ Ws χ₀ s):
+def _root_.LinearMap.BilinForm.Ps.ws : V :=
+  let Ws := FinEnum.toList $ s.Ws
+  match Ws with
+  | [] => 0
+  | h :: _ => h
+
+abbrev LinearMap.BiLinForm.Polarization.omega : End R (P.Ymodel R) := P.omega_aux χ s  (s.ws)
+
+local notation "ω" => (P.omega χ)
+
+lemma weq_lemma (H : wₛ ∈ s.Ws):
 ∀ w : V, (s • h) * (s • w: Heisenberg B)⁻¹ * wₛ * w  =  (s • (w - h.1): Heisenberg B)⁻¹ * wₛ * (w - h.1) * h := by
   intro w
   simp [Heisenberg.inv_def, Heisenberg.mul_def, pseudo_symplectic.smul_def]

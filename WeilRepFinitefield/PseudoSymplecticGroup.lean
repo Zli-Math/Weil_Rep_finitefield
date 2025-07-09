@@ -215,8 +215,6 @@ abbrev LinearMap.BilinForm.Ps.smul (s : B.Ps) (h : B.Heisenberg): B.Heisenberg :
 instance LinearMap.BilinForm.instSmul : SMul (B.Ps) (B.Heisenberg) where
   smul := fun s h => s.smul h
 
-#synth HSMul (B.Ps) (B.Heisenberg) (B.Heisenberg)
-#synth HSMul (B.Ps) (V×K) (V×K)
 
 @[simp]
 lemma LinearMap.BilinForm.Ps.smul_def (s : B.Ps) (h : B.Heisenberg) : s • h =  (s.σ h.1, s.f h.1 + h.2) := by rfl
