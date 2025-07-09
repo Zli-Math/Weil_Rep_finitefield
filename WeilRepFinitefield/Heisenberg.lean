@@ -378,7 +378,7 @@ abbrev BB : LinearMap.BilinForm KK V2 := !![1].toBilin'
 
 abbrev a : Heisenberg (BB) := ⟨1,0⟩
 
-#eval a
+--#eval a
 
 example : a * a = ⟨0,1⟩ := by decide
 

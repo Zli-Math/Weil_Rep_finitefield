@@ -1,7 +1,7 @@
 import Mathlib
 
 import WeilRepFinitefield.Compute
-import WeilRepFinitefield.QuadForm
+import WeilRepFinitefield.QuadForm2
 import WeilRepFinitefield.Heisenberg
 
 section Orthogonal
@@ -20,7 +20,7 @@ local notation "F" => (ZMod 2)
 
 local notation "GL2" => ((Fin 2) → F) ≃ₗ[F] ((Fin 2) → F)
 
-abbrev Q : QuadForm F 2 := !#[![0],![1,0]]
+abbrev Q : QuadForm F 2 := !QF!![0,0;1,0]
 abbrev QQ := Q.toQuadraticForm
 
 #synth Repr QQ.O
@@ -30,7 +30,7 @@ def mm : QQ.O := ⟨LinearEquiv.toGL'.symm ⟨!![0, 1; 1, 0],(by decide)⟩,by d
 #check mm.2
 #eval! FinEnum.toList QQ.O
 
-abbrev Q' : QuadForm F 2 := !#[![1],![1,1]]
+abbrev Q' : QuadForm F 2 := !QF!![1,0;1,1]
 abbrev QQ' := Q'.toQuadraticForm
 
 #synth Repr QQ'.O

@@ -1,6 +1,43 @@
 import Mathlib
 import WeilRepFinitefield.Compute
 
+
+
+section Orthogonal
+variable {R : Type*} [CommSemiring R]  {M : Type*} [AddCommMonoid M]
+[Module R M] (Q : QuadraticForm R M)
+
+namespace QuadraticForm
+abbrev isIso  (σ : M ≃ₗ[R] M) : Prop :=
+  ∀ v : M, Q (σ v) = Q v
+
+abbrev O (Q : QuadraticForm R M) :=
+  {σ : M ≃ₗ[R] M // Q.isIso σ}
+
+
+instance  instFact_isIso_comp : Fact (∀ {a b}, Q.isIso a  → Q.isIso b → Q.isIso (b.trans a)) where
+  out := by
+    intro a b p1 p2  v
+    simp only [LinearEquiv.trans_apply, p1, p2]
+
+
+instance  instFact_isIsoOne : Fact (Q.isIso 1) where
+  out := by
+    intro v
+    simp only [LinearEquiv.coe_one, id_eq]
+
+instance  instFact_isIsoInv : Fact (∀ {a}, Q.isIso a → Q.isIso a.symm) where
+  out := by
+    intro a p v
+    simp only [<- p (a.symm v), LinearEquiv.apply_symm_apply]
+
+#check Q.O
+#synth Group Q.O
+
+end QuadraticForm
+
+end Orthogonal
+
 variable (F: Type*) [CommSemiring F] (n : ℕ)
 
 abbrev QuadForm := {B : Matrix (Fin n) (Fin n) F // ∀ i j , j > i →  B i j = 0}
@@ -81,6 +118,9 @@ instance (priority := 5000) QuadraticForm.hasRepr [Repr F] : Repr (QuadraticForm
 end toQuadraticForm
 
 
+
+
+
 section test
 abbrev Q0 : QuadForm (ZMod 2) 0 := !QF!![]
 abbrev Q1 : QuadForm (ZMod 2) 1 := !QF!![0]
@@ -89,7 +129,7 @@ abbrev Q1'' : QuadForm (ZMod 2) 3:= !QF!![0,0,0;0,1,0;1,0,0]
 
 #eval Q1
 #eval Q1'
-#eval Q1''.toQuadraticForm.toQuadForm
+#eval! Q1''.toQuadraticForm.toQuadForm
 #eval! FinEnum.toList (QuadraticForm (ZMod 2) (Fin 2 → ZMod 2))
 
 example :(FinEnum.toList (QuadraticForm (ZMod 2) (Fin 2 → ZMod 2)))
@@ -111,6 +151,33 @@ example : (Fin 2) = (ZMod 2) := rfl
 #eval  (Finset.univ : Finset $ QuadForm (ZMod 2) 3).card
 #eval (Finset.univ : Finset (Fin 2 → (ZMod 2)))
 ---#eval (!#[![0],![1,0]] : QuadForm (ZMod 2) 2)
+
+
+local notation "F" => (ZMod 2)
+
+local notation "GL2" => ((Fin 2) → F) ≃ₗ[F] ((Fin 2) → F)
+
+abbrev Q : QuadForm F 2 := !QF!![0,0;1,0]
+abbrev QQ := Q.toQuadraticForm
+
+#synth Repr QQ.O
+
+def mm : QQ.O := ⟨LinearEquiv.toGL'.symm ⟨!![0, 1; 1, 0],(by decide)⟩,by decide⟩
+
+#check mm.2
+#eval! FinEnum.toList QQ.O
+
+abbrev Q' : QuadForm F 2 := !QF!![1,0;1,1]
+abbrev QQ' := Q'.toQuadraticForm
+
+#synth Repr QQ'.O
+
+def mm' : QQ'.O := ⟨LinearEquiv.toGL'.symm ⟨!![0, 1; 1, 0],by decide⟩,by decide⟩
+
+#eval! mm'*mm'
+
+#eval! FinEnum.toList QQ'.O
+
 
 end test
 

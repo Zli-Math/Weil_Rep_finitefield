@@ -1,264 +1,118 @@
 import Mathlib
-import WeilRepFinitefield.Quadratic
+import WeilRepFinitefield.Compute
 
-section Pseudo_Symplectic_Group
+--import WeilRepFinitefield.Quadratic
+
+section Symplectic_Group
 
 variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V] [Module K V]
 
-variable (B : V → V → K ) --[hnd : NonDegenerate (alternatingform B)]
+variable (B : LinearMap.BilinForm K V) --[hnd : NonDegenerate (alternatingform B)]
 --(nondegenerate_symplectic_form : nondegenerate (alternatingform B))
 
 open Function
 
---symplectic_form
-local notation "B_s" => (alternatingform B)
+abbrev LinearMap.BilinForm.isAlt (B : LinearMap.BilinForm K V) (σ : V ≃ₗ[K] V) : Prop := ∀ w v, B (σ w) (σ v) - B w v = B (σ v) (σ w) - B v w
 
---symplectic_space
-structure symplectic_space where
-space := V
-form := B_s
+abbrev LinearMap.BilinForm.Sp := {σ : V ≃ₗ[K] V // B.isAlt σ }
 
-variable (V_s: symplectic_space B)
-
-
-@[ext]
-structure Sp where
-σ : V ≃ₗ[K] V
-preserveB : ∀ w v, B (σ w) (σ v) - B w v = B (σ v) (σ w) - B v w
-
-namespace Sp
+namespace LinearMap.BilinForm.Sp
 
 
 
-instance Sp_funlike : FunLike (Sp B) V V where
-  coe := fun s => s.σ
-  coe_injective' := by intro a b h; ext; simp [h]
+variable (σ : B.Sp)
+variable {B}
+
+lemma coe_map : σ.1 v  = σ v := rfl
+lemma coe_map' : σ v  = σ.1 v := rfl
 
 
+lemma preserveB : ∀ w v, B (σ w) (σ  v) - B w v = B (σ v) (σ w) - B v w := σ.2
 
-variable (σ : Sp B)
-lemma coe_map : σ.σ v  = σ v := rfl
-
-
-lemma preserveB' : ∀ w v, B (σ w) (σ  v) - B w v = B (σ v) (σ w) - B v w := σ.preserveB
-
-variable {B} in
 lemma linear : ∀ w v, σ (w + v) = σ w + σ v := by
-  intro w v; rw [DFunLike.coe,Sp_funlike]
-  simp only [map_add]
+  simp only [coe_map', map_add, implies_true]
 
-variable {B} in
 lemma slinear : ∀ (r : K) w, σ (r • w) = r • σ w := by
   intro r w
-  rw [DFunLike.coe,Sp_funlike]
-  simp only [map_smul]
+  simp only [coe_map', map_smul]
 
-
-lemma sym_auto_comp (σ₁ σ₂ : Sp B) : ∀ w v, B ((σ₁ ∘ σ₂) w) ((σ₁ ∘ σ₂) v) - B w v = B ((σ₁ ∘ σ₂) v) ((σ₁ ∘ σ₂) w) - B v w := by
+/-
+lemma sym_auto_comp (σ₁ σ₂ : B.Sp) : ∀ w v, B ((σ₁ ∘ σ₂) w) ((σ₁ ∘ σ₂) v) - B w v = B ((σ₁ ∘ σ₂) v) ((σ₁ ∘ σ₂) w) - B v w := by
   intro w v
-  simp [Function.comp]
+  simp [Function.comp,coe_map']
   have h₁ : B (σ₁ (σ₂ w)) (σ₁.1 (σ₂ v)) - B (σ₂ w) (σ₂ v) = B (σ₁ (σ₂ v)) (σ₁ (σ₂ w)) - B (σ₂ v) (σ₂ w) := σ₁.preserveB (σ₂ w) (σ₂ v)
-  have h₂ : B (σ₂ w) (σ₂ v) - B w v = B (σ₂ v) (σ₂ w) - B v w := σ₂.preserveB w v
+  have h₂ : B (σ₂ w) (σ₂ v) - B w v = B (σ₂ v) (σ₂ w) - B v w := σ₂.2 w v
   linear_combination h₁ + h₂
 
-instance : HMul (Sp B)  (Sp B) (Sp B) where
-  hMul := fun a b =>  ⟨b.σ.trans a.σ, sym_auto_comp B _ _ ⟩
+-/
 
-variable (a b : Sp B)
---omit hnd in
-lemma  mul_def : a * b = ⟨b.1.trans a.1, sym_auto_comp B _ _⟩:= rfl
-
-
-@[simp]
-lemma map_mul (a b : Sp B) (v : V): (a * b) v = a ( b v ) := by
-  rw [mul_def]
-  calc
-  _ = (b.σ.trans a.σ ) v := by rfl
+instance instFact_isALtclosed : Fact (∀ {a b}, B.isAlt a → B.isAlt b → B.isAlt (b.trans a)) where
+  out :=  by
+    intro σ₁ σ₂ p1 p2 w v
+    have h₁ : B (σ₁ (σ₂ w)) (σ₁.1 (σ₂ v)) - B (σ₂ w) (σ₂ v) = B (σ₁ (σ₂ v)) (σ₁ (σ₂ w)) - B (σ₂ v) (σ₂ w) := p1 (σ₂ w) (σ₂ v)
+    have h₂ : B (σ₂ w) (σ₂ v) - B w v = B (σ₂ v) (σ₂ w) - B v w := p2 w v
+    simp only [LinearEquiv.trans_apply]
+    linear_combination h₁ + h₂
 
 
-instance instSemigroup : Semigroup (Sp B) where
-  mul := HMul.hMul
-  mul_assoc := by
-    intro a b c
-    simp [mul_def]
-    rfl
+--instance : HMul (B.Sp)  (B.Sp) (B.Sp) := SubGL.instHMul
 
-instance hasOne: One (Sp B)  where
-  one := ⟨1, by simp⟩
+--#synth HMul  B.Sp B.Sp B.Sp
 
-lemma One_def : (1 : Sp B) = ⟨1,by simp⟩  := rfl
+variable (a b : B.Sp)
+
+instance instFact_isAltOne : Fact (B.isAlt 1) where
+  out := fun _ _ => by simp only [LinearEquiv.coe_one, id_eq, sub_self]
+
 
 @[simp]
 lemma map_one (v : V): (1 : Sp B) v = v := by rfl
 
-instance instMulOneClass : MulOneClass (Sp B) where
-  one_mul := by
-    intro a
-    simp [mul_def]
-    aesop
-  mul_one := by
-    intro a
-    simp [mul_def]
-    aesop
+#synth MulOneClass (Sp B)
 
-
-instance instMonoid : Monoid (Sp B) where
-  one_mul := one_mul
-  mul_one := mul_one
-  npow := npowRecAuto
-  npow_zero := by intros; rfl
-  npow_succ := by intros; rfl
-
-variable {B} in
-lemma inv_aux : ∀ w v, B (σ.1.symm w) (σ.1.symm v) - B w v = B (σ.1.symm v) (σ.1.symm w) - B v w := by
-    intro w v
-    have fun_inv_fun  : ∀ v, σ.σ (σ.1.symm v)  = v
-    := by simp
-    have h : B (σ.1 (σ.1.symm w)) (σ.1 (σ.1.symm v)) - B (σ.1.symm w) (σ.1.symm v) = B (σ.1 (σ.1.symm v)) (σ.1 (σ.1.symm w)) - B (σ.1.symm v) (σ.1.symm w):= by simp only [σ.preserveB]
+instance instFact_isAutInv : Fact (∀ {σ}, B.isAlt σ → B.isAlt σ.symm) where
+  out := by
+    intro σ p w v
+    have fun_inv_fun  : ∀ v, σ (σ.symm v)  = v
+    := by simp only [LinearEquiv.apply_symm_apply, implies_true]
+    have h :=  p (σ.symm w) (σ.symm v)
     repeat rw [fun_inv_fun] at h
     linear_combination -h
 
+#synth Group B.Sp
 
-instance instGroup : Group (Sp B) where
-  inv := fun σ=> ⟨σ.1.symm, inv_aux σ⟩
-  inv_mul_cancel := by
-    intro a
-    ext v
-    calc
-    _ = a.σ.symm (a.σ v) := by simp [mul_def]
-    _ = _ := by rw [One_def];simp only [LinearEquiv.symm_apply_apply,
-      LinearEquiv.coe_one, id_eq]
+end LinearMap.BilinForm.Sp
+end Symplectic_Group
 
-lemma inv_def: σ⁻¹ = ⟨σ.1.symm, inv_aux σ⟩ := rfl
+section PS_Group
 
-@[simp]
-lemma self_of_map_inv_self : σ⁻¹ (σ v) = v := by
-  simp only [← map_mul, inv_mul_cancel, map_one]
+variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V] [Module K V]
+variable (B : LinearMap.BilinForm K V) --[hnd : NonDegenerate (alternatingform B)]
 
-@[simp]
-lemma self_of_map_self_inv : σ (σ⁻¹ v) = v := by
-  simp only [← map_mul, mul_inv_cancel, map_one]
 
-end Sp
+abbrev LinearMap.BilinForm.associated (σ :V≃ₗ[K] V ) (f : QuadraticForm K V) := ∀ w v, QuadraticMap.polar f w v = B (σ w) (σ v) - B w v
 
-namespace pseudo_symplectic
+abbrev LinearMap.BilinForm.Ps :=
+  {σ : (V≃ₗ[K] V) × (QuadraticForm K V) // B.associated σ.1 σ.2}
 
-open Heisenberg Function Sp
+abbrev LinearMap.BilinForm.Ps.σ (a : B.Ps):= a.1.1
+abbrev LinearMap.BilinForm.Ps.f (a : B.Ps):= a.1.2
 
-variable (f : V → K)
-
-@[ext]
-structure Ps where
-σ : Sp B
-f : V → K
-Quaf : Quadraticform f
-associatedB : ∀ w v, form f w v = B (σ w) (σ v) - B w v
-
-lemma add_quadraticform (f : V → K ) (g : V → K) (h1 : Quadraticform f) (h2 : Quadraticform g) : Quadraticform (f + g) := by
-  constructor
-  · constructor
-    · intro r w v
-      simp [form]
-      have hf : f (r + w + v) - f (r + w) - f v = f (r + v) - f r - f v + f (w + v) - f w - f v := by
-        have hf' := h1.bilinear.llinear r w v
-        simp_all [form]
-        ring
-      have hg : g (r + w + v) - g (r + w) - g v = g (r + v) - g r - g v + g (w + v) - g w - g v := by
-        have hg' := h2.bilinear.llinear r w v
-        simp_all [form]
-        ring
-      calc
-        _ = (f (r + w + v) - f (r + w) - f v) + (g (r + w + v) - g (r + w) - g v) := by ring
-        _ = (f (r + v) - f r - f v + f (w + v) - f w - f v) + (g (r + v) - g r - g v + g (w + v) - g w - g v) := by simp [hf, hg]
-        _ = f (r + v) + g (r + v) - (f r + g r) - (f v + g v) + (f (w + v) + g (w + v) - (f w + g w) - (f v + g v)) := by ring
-    · intro r w v
-      simp [form]
-      have hf : f (w + (r + v)) - f (w) - f (r + v) = f (w + r) - f w - f r + f (w + v) - f w - f v := by
-        have hf' := h1.bilinear.rlinear r w v
-        simp_all [form]
-        ring
-      have hg : g (w + (r + v)) - g (w) - g (r + v) = g (w + r) - g w - g r + g (w + v) - g w - g v := by
-        have hg' := h2.bilinear.rlinear r w v
-        simp_all [form]
-        ring
-      calc
-        _ = (f (w + (r + v)) - f (w) - f (r + v)) + (g (w + (r + v)) - g (w) - g (r + v)) := by ring
-        _ = (f (w + r) - f w - f r + f (w + v) - f w - f v) + (g (w + r) - g w - g r + g (w + v) - g w - g v) := by simp [hf, hg]
-        _ = f (w + r) + g (w + r) - (f w + g w) - (f r + g r) + (f (w + v) + g (w + v) - (f w + g w) - (f v + g v)) := by ring
-    · intro r w v
-      simp [form]
-      have hf : f (r • w + v) - f (r • w) - f v = r * (f (w + v) - f w - f v) := by
-        have hf' := h1.bilinear.lslinear r w v
-        simp_all [form]
-      have hg : g (r • w + v) - g (r • w) - g v = r * (g (w + v) - g w - g v) := by
-        have hg' := h2.bilinear.lslinear r w v
-        simp_all [form]
-      calc
-        _ = (f (r • w + v) - f (r • w) - f v) + (g (r • w + v) - g (r • w) - g v) := by ring
-        _ = r * (f (w + v) - f w - f v) + r * (g (w + v) - g w - g v) := by simp [hf, hg]
-        _ = r * (f (w + v) + g (w + v) - (f w + g w) - (f v + g v)) := by ring
-    · intro r w v
-      simp [form]
-      have hf : f (w + r • v) - f w - f (r • v) = r * (f (w + v) - f w - f v) := by
-        have hf' := h1.bilinear.rslinear r w v
-        simp_all [form]
-      have hg : g (w + r • v) - g w - g (r • v) = r * (g (w + v) - g w - g v) := by
-        have hg' := h2.bilinear.rslinear r w v
-        simp_all [form]
-      calc
-        _ = (f (w + r • v) - f w - f (r • v)) + (g (w + r • v) - g w - g (r • v)) := by ring
-        _ = r * (f (w + v) - f w - f v) + r * (g (w + v) - g w - g v) := by simp [hf, hg]
-        _ = r * (f (w + v) + g (w + v) - (f w + g w) - (f v + g v)) := by ring
-  · intro t v
-    calc
-      _ = f (t • v) + g (t • v) := by rfl
-      _ = t^2 * f v + t^2 * g v := by rw [h1.2, h2.2]
-      _ = t^2 * (f (v) + g (v)) := by ring
-
-lemma comp_quadraricform (f : V → K) (σ : Sp B) (h : Quadraticform f) : Quadraticform (f ∘ σ) := by
-  constructor
-  · constructor
-    · intro r w v
-      simp [form]
-      have h' : f (σ.σ (r + w + v)) - f (σ.σ (r + w)) - f (σ.σ v) = f (σ.σ r + σ.σ w + σ.σ v) - f (σ.σ r + σ.σ w) - f (σ.σ v) := by simp only [map_add]
-      repeat rw [Sp.coe_map] at h'
-      rw [h']
-      have h'' := h.bilinear.llinear (σ.σ r) (σ.σ w) (σ.σ v)
-      repeat rw [Sp.coe_map] at h''
-      simp_all [form]
-      rw [linear σ r v, linear σ w v]
-    · intro r w v
-      simp [form]
-      have h' : f (σ.σ (w + (r + v))) - f (σ.σ (w)) - f (σ.σ (r + v)) = f (σ.σ w + (σ.σ r + σ.σ v)) - f (σ.σ w) - f (σ.σ r + σ.σ v):= by simp [add_assoc, linear σ]
-      repeat rw [Sp.coe_map] at h'
-      rw [h']
-      have h'' := h.bilinear.rlinear (σ.σ r) (σ.σ w) (σ.σ v)
-      repeat rw [Sp.coe_map] at h''
-      simp_all [← add_assoc, form]
-      rw [linear σ w r, linear σ w v]
-    · intro r w v
-      simp [form, Sp.linear, Sp.slinear]
-      exact h.bilinear.lslinear r (σ w) (σ v)
-    · intro r w v
-      simp [form, Sp.linear, Sp.slinear]
-      exact h.bilinear.rslinear r (σ w) (σ v)
-  · intro t v
-    calc
-      _ = f (t • (σ  v)) := by simp [slinear]
-      _ = t^2 * f (σ.1 v):= by rw [coe_map,h.2]
-      _ = t^2 * ((f ∘ σ.1) (v)) := by simp
-
-lemma comp_associatedB  (a b : Ps B) : ∀ w v, form (b.2 + a.2 ∘ b.1.1) w v = B ((a.σ * b.σ).1 w) ((a.1 * b.1).1 v) - B w v := by
+lemma comp_associatedB  (a b : B.Ps) : ∀ w v, QuadraticMap.polar (b.f + ((a.f).comp (b.σ).toLinearMap)) w v = B ((a.σ * b.σ) w) ((a.σ * b.σ) v) - B w v := by
+  sorry
+  /-
   intro w v
   simp [form, Sp.mul_def]
   have h1 : b.f (w + v) - b.f w - b.f v = B (b.σ.σ w) (b.σ.σ v) - B w v := b.associatedB w v
   have h2 : a.f (b.σ.σ w +  b.σ.σ v) - a.f (b.σ.σ w) - a.f (b.σ.σ v) = B (a.σ.σ (b.σ.σ w)) (a.σ.σ (b.σ.σ v)) - B (b.σ.σ w) (b.σ.σ v) := by
     exact a.associatedB (b.σ.σ w) (b.σ.σ v)
   linear_combination h1 + h2
+  -/
 
-instance : HMul (Ps B)  (Ps B) (Ps B) where
-  hMul := fun a b =>  ⟨a.σ * b.σ, b.f + a.f ∘ b.1, add_quadraticform (b.f) (a.f ∘ b.σ) (b.3) (comp_quadraricform B a.f b.σ a.3), comp_associatedB B a b⟩
+instance : HMul (B.Ps)  (B.Ps) (B.Ps) where
+  hMul := fun a b =>  ⟨ ((a.σ) * (b.σ), b.f + ((a.f).comp  (b.σ).toLinearMap)), comp_associatedB B a b⟩
 
+end PS_Group
 
 lemma  mul_def (a b : Ps B) : a * b = ⟨a.1 * b.1, b.f + a.f ∘ b.1, add_quadraticform (b.2) (a.2 ∘ b.1.1) (b.3) (comp_quadraricform B a.2 b.1 a.3), comp_associatedB B a b⟩:= rfl
 

@@ -37,23 +37,106 @@ instance  [FinEnum R]  [FinEnum α] [DecidableEq α]
 instance [Repr R]  : Repr (LinearMap.BilinForm R (Fin n → R)) where
   reprPrec := fun v _ => "(" ++ repr v.toMatrix'++").toBilin'"
 
+section GLSubgroup
 
-abbrev LinearEquiv.id [AddCommMonoid M] [Module R M] : M ≃ₗ[R] M where
-  toFun := _root_.id
-  map_add' := by
-    intro _ _
-    simp
-  map_smul' := by
-    intro _ _
-    simp
-  invFun := _root_.id
-  left_inv := by
-    intro x
-    simp
-  right_inv := by
-    intro x
-    simp
+variable {R M : Type*} [CommSemiring R]  [AddCommMonoid M] [Module R M] {p : (M ≃ₗ[R] M) → Prop }
 
+local notation "G" => {σ : M ≃ₗ[R] M // p σ}
+
+instance LinearEquiv.instSubtypeEquivLike : EquivLike G M M where
+  coe e := e.1.toFun
+  inv e:= e.1.invFun
+  coe_injective' e1 e2 h _ := by
+    apply Subtype.val_injective
+    apply LinearEquiv.toLinearMap_injective (DFunLike.coe_injective h)
+  left_inv _ := by
+    apply LinearEquiv.left_inv
+  right_inv _ := by
+    apply LinearEquiv.right_inv
+
+
+abbrev LinearEquiv.id [AddCommMonoid M] [Module R M] : M ≃ₗ[R] M := 1
+
+
+namespace SubGL
+
+variable [pclosed : Fact (∀ {a b}, p a → p b → p (b.trans a))]
+
+instance instHMul: HMul G G G where
+  hMul := fun a b =>  ⟨b.1.trans a.1, pclosed.out a.2 b.2⟩
+
+variable (a b : {σ : M ≃ₗ[R] M // p σ})
+
+
+lemma  mul_def : a * b =
+  ⟨b.1.trans a.1, pclosed.out a.2 b.2⟩:= rfl
+
+
+@[simp]
+lemma map_mul (v : M): (a * b) v = a ( b v ) := by
+  rw [mul_def]
+  calc
+  _ = (b.1.trans a.1 ) v := by rfl
+
+
+instance instSemigroup : Semigroup G where
+  mul := HMul.hMul
+  mul_assoc := by
+    intro a b c
+    simp [mul_def]
+    rfl
+
+variable [pone : Fact (p 1)]
+
+instance hasOne: One G  where
+  one := ⟨1, pone.out⟩
+
+omit pclosed in
+lemma One_def : (1 : G) = ⟨1, pone.out⟩  := rfl
+
+omit pclosed in
+@[simp]
+lemma map_one (v : M): (1 : G) v = v := by rfl
+
+instance instMulOneClass : MulOneClass (G) where
+  one_mul := by
+    intro a
+    simp [mul_def]
+    rfl
+  mul_one := by
+    intro a
+    simp [mul_def]
+    rfl
+
+
+instance instMonoid : Monoid (G) where
+  one_mul := one_mul
+  mul_one := mul_one
+
+
+variable [pinv : Fact (∀ {a}, p a → p a.symm)]
+
+instance instGroup : Group G where
+  inv := fun σ=> ⟨σ.1.symm, pinv.out σ.2⟩
+  inv_mul_cancel := fun a => by
+    simp only [mul_def,LinearEquiv.self_trans_symm]
+    rfl
+
+
+
+lemma inv_def: a⁻¹ = ⟨a.1.symm, pinv.out a.2⟩ := rfl
+
+@[simp]
+lemma self_of_map_inv_self : a⁻¹ (a v) = v := by
+  simp only [← map_mul, inv_mul_cancel, map_one]
+
+@[simp]
+lemma self_of_map_self_inv : a (a⁻¹ v) = v := by
+  simp only [← map_mul, mul_inv_cancel, map_one]
+
+end SubGL
+
+end GLSubgroup
 
 section Inv
 

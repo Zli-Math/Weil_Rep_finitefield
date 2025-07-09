@@ -1,6 +1,5 @@
 import Mathlib
-import WeilRepFinitefield.Quadratic
-import WeilRepFinitefield.Schrodinger_Model
+import WeilRepFinitefield.SchrodingerModel
 
 
 noncomputable section Heisenberg_Representation
@@ -8,16 +7,18 @@ open Schrodinger_Model Heisenberg Function
 
 set_option maxHeartbeats 400000
 
-variable {K : Type } [hfK : Field K] [Fintype K] {V : Type } [hcV : AddCommGroup V] [hmV : Module K V] [FiniteDimensional K V] (B : V → V → K) [IsBilinear B] {X Y : Submodule K V} (χ₀ : AddChar K ℂˣ) (hp : polarization B X Y) (χ : (subXK B (X := X)) →* ℂˣ) [isextendchara : extendcharacter B χ₀ χ] (x : X) [char2: CharP K 2]
+variable {K : Type } [hfK : Field K] {V : Type } [hcV : AddCommGroup V] [hmV : Module K V] (B : LinearMap.BilinForm K V) {X Y : Submodule K V}
+
+variable {R : Type*} [Field R] (χ₀ : AddChar K R) (P: Polarization B X Y) (χ : (B.toSubgroup X) →* Rˣ) [isextendchara : extendcharacter B χ₀ χ] (x : X) [char2: CharP K 2]
 
 
 
-abbrev rho_aux (h : Heisenberg B) : Module.End ℂ (Schrodinger_model B χ)
+abbrev rho_aux (h : Heisenberg B) : Module.End R (Schrodinger_model B χ)
   where
   toFun := fun f => ⟨fun h2 => f.1 (h⁻¹ * h2), Sch_act_mem B χ f.2 h⁻¹⟩
   map_add' := by
     intro f1 f2
-    apply ext; intro h'
+    ext h'
     simp_all only
     obtain ⟨val_1, property_1⟩ := f1
     obtain ⟨val_2, property_2⟩ := f2
@@ -33,73 +34,70 @@ abbrev rho_aux (h : Heisenberg B) : Module.End ℂ (Schrodinger_model B χ)
 
 
 
-def rho : Heisenberg B  →* Module.End ℂ (Schrodinger_model B χ) where
+def rho : Heisenberg B  →* Module.End R (Schrodinger_model B χ) where
   toFun := rho_aux B χ
   map_one' := by unfold rho_aux; simp ; rfl
   map_mul' := by
     intro a b
     ext f y
     unfold rho_aux
-    simp [Heisenberg.mul_def, Heisenberg.inv_def]
-    have eq : -B a.1 b.1 + (-b.2 + -a.2) + B (a.1 + b.1) (a.1 + b.1) + y.2 + B (-b.1 + -a.1) y.1 = -b.2 + B b.1 b.1 + (-a.2 + B a.1 a.1 + y.2 + B (-a.1) y.1) + B (-b.1) (-a.1 + y.1):= by
-      have : - B a.1 b.1 + B (a.1 + b.1) (a.1 + b.1) + B (-b.1 + -a.1) y.1 =  B b.1 b.1 + B a.1 a.1 + B (-a.1) y.1 + B (-b.1) (-a.1 + y.1) := by
-        simp_all [IsBilinear.llinear, IsBilinear.rlinear]
-        rw [← add_assoc (-B a.1 b.1), add_comm (B a.1 a.1), ← add_assoc (-B a.1 b.1), neg_add_cancel, zero_add, add_comm (B b.1 b.1), add_comm (B b.1 a.1), ← add_assoc (B a.1 a.1)]
-        simp [add_assoc]
-        rw [add_comm (B (-b.1) y.1), ← add_assoc, add_comm (B b.1 a.1)]
-        simp [add_assoc]
-        rw [← neg_one_smul K b.1, ← neg_one_smul K a.1]
-        simp only [IsBilinear.lslinear, IsBilinear.rslinear]
-        simp
-      rw [add_comm (-B a.1 b.1), add_assoc _ y.2 _, add_comm y.2, ← add_assoc, add_assoc (-b.2 + -a.2), add_assoc (-b.2 + -a.2), this]
-      rw [add_assoc (-b.2), ← add_assoc (-a.2), ← add_assoc (-a.2), ← add_assoc (-a.2), add_comm (-a.2), add_assoc (B b.1 b.1), ← add_assoc (-b.2),  ← add_assoc (-b.2), ← add_assoc (-b.2)]
-      simp [add_assoc]
-      rw [add_comm _ y.2, ← add_assoc, add_comm _ y.2, add_assoc]
-    rw [eq, add_assoc]
+    simp only [mul_def, inv_def, neg_add_rev, map_add, LinearMap.add_apply, map_neg,
+      LinearMap.neg_apply, LinearMap.coe_mk, AddHom.coe_mk, LinearMap.mul_apply, neg_neg]
+    apply congr_arg
+    abel_nf
 
--- The GeneralLinearGroup packet in mathlib is not good, so choose not to define it as linearEquiv
---def rho : Heisenberg B  →* LinearMap.GeneralLinearGroup ℂ (Schrodinger_model B χ):= MonoidHom.toHomUnits (rho_aux1 B χ)
+open LinearMap
+open BilinForm
+
+variable {B} (R) in
+abbrev Polarization.Ymodel (P : Polarization B X Y):= Y → R
 
 variable {B} in
-abbrev Ymodel (hp: polarization B X Y):= Y → ℂ
-
-variable {B} in
-def homY (hp : polarization B X Y) : (Schrodinger_model B χ) ≃ₗ[ℂ] (Ymodel hp) where
+def Polarization.homY : (Schrodinger_model B χ) ≃ₗ[R] (P.Ymodel R) where
   toFun := fun f => (fun y => f.1 y)
   map_add' := by intro a b; simp; rfl
   map_smul' := by intro m n; simp; rfl
-  invFun := fun g => (⟨fun (w : Heisenberg B) => χ (⟨((X_coor B hp w).1, w.2 - B (Y_coor B hp w).1 (X_coor B hp w).1 ), by simp [subXK, Set.prod]⟩)⁻¹ * g ⟨(Y_coor B hp w).1, by simp⟩, by
-    simp [Schrodinger_model]
+  invFun := fun g => (⟨fun (w : Heisenberg B) => χ (⟨((P.X_coor w).1, w.2 - B (P.Y_coor  w).1 (P.X_coor w).1 ), by simp [LinearMap.BilinForm.toSubgroup, Set.prod]⟩)⁻¹ * g ⟨(P.Y_coor w).1, by simp⟩, by
+    simp only [Schrodinger_model, Units.val_inv_eq_inv_val, Subtype.forall, Prod.forall, map_inv,
+      Subtype.coe_eta, Set.mem_setOf_eq]
     intro a b w t w₀
-    have hw : w ∈ X := by simp [subXK, Set.prod] at w₀; exact w₀
-    simp [XY_coor_linear, Heisenberg.mul_def]
+    have hw : w ∈ X := by simp [LinearMap.BilinForm.toSubgroup, Set.prod] at w₀; exact w₀
+    simp [P.XY_coor_linear, Heisenberg.mul_def]
     rw [← mul_assoc, ← mul_inv_rev]
     norm_cast
     rw [← MonoidHom.map_mul χ]
     simp [Heisenberg.mul_def]
     norm_cast
-    have hB : B a w - B (Y_coor B hp (a, b) + Y_coor B hp (w, t)) ((X_coor B hp (a,b)).1 + w)  = B (X_coor B hp (a,b)).1 w - B (X_coor B hp (a,b)).1 (Y_coor B hp (a, b)).1 := by
-      have hab : a = (X_coor B hp (a,b)).1 + (Y_coor B hp (a,b)).1 := by
-        have := element_XY B hp (a,b)
+    have hB : B a w - B (P.Y_coor (a, b) + P.Y_coor (w, t)) ((P.X_coor (a,b)).1 + w)  = B (P.X_coor (a,b)).1 w - B (P.X_coor (a,b)).1 (P.Y_coor (a, b)).1 := by
+      have hab : a = (P.X_coor (a,b)).1 + (P.Y_coor (a,b)).1 := by
+        have := P.element_XY (a,b)
         simp [Set.prod] at this
         exact this
       nth_rw 1 [hab]
-      simp [IsBilinear.llinear, IsBilinear.rlinear]
-      rw [Y_coor_of_X B hp w t hw]
-      simp [Brzero, X_coor, Y_coor]
-      have:= hp.5
+      simp only [map_add, LinearMap.add_apply]
+      rw [P.Y_coor_of_X hw]
+      norm_cast
+      simp_rw [Blzero,add_zero]
+      abel_nf
+      sorry
+      /-
+      have:= P.5
       simp [alternatingform] at this
       rw [← sub_eq_zero]
       apply this _ _ _ _
       simp
       simp
-    simp only [← add_sub (b + t), Y_coor_add_X B hp a _ w hw]
-    simp only [Y_coor]
-    have hw' := X_in_X B hp w t hw
-    have hw'' := Y_coor_of_X B hp w t hw
+      -/
+    simp [← add_sub (b + t), P.Y_coor_add_X  hw]
+    --simp [P.Y_coor]
+    have hw' := P.X_in_X _ t hw
+    have hw'' := P.Y_coor_of_X (t:=t)  hw
     congr 2
     congr 2
     congr 2
+    sorry
+    sorry
+    /-
     · rw [← Heisenberg.mul_def B ((a,b) : Heisenberg B) (w,t)]
       simp [XY_coor_linear, hw']
     · rw [← Heisenberg.mul_def B ((a,b) : Heisenberg B) (w,t)]
@@ -113,31 +111,33 @@ def homY (hp : polarization B X Y) : (Schrodinger_model B χ) ≃ₗ[ℂ] (Ymode
       rw [← sub_eq_zero]
       apply this _ _ _ _
       simp
-      simp⟩)
+      simp
+     -/
+      ⟩)
   left_inv := by
     simp [LeftInverse]
     intro f hf
     ext w
     symm
-    nth_rw 1 [element_XY' B hp w]
+    nth_rw 1 [P.element_XY' w]
     simp [Schrodinger_model] at hf
-    have := hf (Y_coor B hp w) 0 (X_coor B hp w) (w.2 - B (Y_coor B hp w) (X_coor B hp w))
+    have := hf (P.Y_coor w) 0 (P.X_coor  w) (w.2 - B (P.Y_coor  w) (P.X_coor w))
     apply this
   right_inv := by
     simp [Function.RightInverse, LeftInverse]
     intro g
     ext y
-    have : Y_coor B hp (y,0) = y := by
-      have hY := Y_in_Y B hp y 0 (by simp)
+    have : P.Y_coor  (y,0) = y := by
+      have hY := P.Y_in_Y y 0 (by simp)
       norm_cast at hY
-    rw [this, X_coor_of_Y B hp]
+    rw [this, P.X_coor_of_Y]
     have : B y (0 : X) = 0 := by
       norm_cast
       rw [Brzero B y]
     rw [← neg_eq_zero] at this
     simp only [this]
     have := χ.map_one'
-    have one : (1 : subXK B X) = ⟨((0 : X), (0 : K)), by simp [subXK, Set.prod]⟩ := by rfl
+    have one : (1 : B.toSubgroup X) = ⟨((0 : X), (0 : K)), by simp [LinearMap.BilinForm.toSubgroup, Set.prod]⟩ := by rfl
     have h2 := χ.toFun_eq_coe
     rw [one, h2] at this
     rw [this]
@@ -148,13 +148,13 @@ def homY (hp : polarization B X Y) : (Schrodinger_model B χ) ≃ₗ[ℂ] (Ymode
     simp
 
 variable {B} in
-def rhoY : Heisenberg B →* Module.End ℂ (Ymodel hp) where
-  toFun :=   (LinearEquiv.conj (homY χ hp)) ∘ (rho B χ)
+def Polarization.rhoY : Heisenberg B →* Module.End R (P.Ymodel R) where
+  toFun :=   (LinearEquiv.conj (P.homY χ)) ∘ (rho B χ)
   map_one' := by ext f y; simp [LinearEquiv.conj]
   map_mul' := by
     intro w v
     ext f z
-    unfold homY; unfold rho; unfold rho_aux
+    unfold Polarization.homY; unfold rho; unfold rho_aux
     simp [_root_.map_mul, LinearEquiv.conj, Heisenberg.inv_def]
     rw [← mul_assoc]
     congr 2
@@ -163,10 +163,13 @@ def rhoY : Heisenberg B →* Module.End ℂ (Ymodel hp) where
     rw [← MonoidHom.map_mul χ]
     congr 2
     simp [Heisenberg.mul_def]
+    sorry
+    sorry
+    /-
     constructor
-    · rw [X_coor_add_Y B hp (-v.1) _ _ (by simp)]
-      simp [X_coor]
-      have := (XY_coor_linear B hp (-v.1) (-w.1 + z)).1
+    · rw [P.X_coor_add_Y (-v.1) _ _ (by simp)]
+      simp [P.X_coor]
+      have := (P.XY_coor_linear (-v.1) (-w.1 + z)).1
       simp [Heisenberg.mul_def, ← add_assoc (-v.1), X_coor] at this
       exact this
     · rw [X_coor_add_Y B hp (-v.1) _ _ (by simp)]
@@ -204,31 +207,35 @@ def rhoY : Heisenberg B →* Module.End ℂ (Ymodel hp) where
       have eq5 : B (Y_coor B hp (-v.1, 0)) (X_coor B hp (-w.1 + ↑z, 0)) - B (-v.1) (X_coor B hp (-w.1 + ↑z, 0)) = -B (X_coor B hp (-v.1, 0)) (X_coor B hp (-w.1 + ↑z, 0)) := by nth_rw 2 [element_of_V_XY B hp (-v.1)]; simp [IsBilinear.llinear]
       rw [eq5]
       simp [sub_eq_add_neg]
-    simp [Heisenberg.mul_def, XY_coor]
-    nth_rw 2 [Y_coor_add_Y]
+    simp [Heisenberg.mul_def, P.XY_coor]
+    nth_rw 2 [P.Y_coor_add_Y]
     rw [add_assoc, ]
-    have := (XY_coor_linear' B hp (-v.1) (-w.1 + z)).2
+    have := (P.XY_coor_linear' (-v.1) (-w.1 + z)).2
     norm_cast at this
+    -/
 
 
 
-local notation "ρ" => (rhoY hp χ)
+local notation "ρ" => (P.rhoY χ)
 
 -- Lemma 2.3 correct the expression on RHS
-omit [Fintype K] [FiniteDimensional K V] in
-lemma rhoY.eq (x : X) (y y': Y) (t:K) (f : Ymodel hp) : (rhoY hp χ) (⟨x+y,t⟩: Heisenberg B) f y'=  χ ⟨⟨x,t - B y y + B x y' - B y' x - B (x + y') y⟩,by simp [subXK, Set.prod]⟩ * f (y' - y):= by
-  unfold rhoY; unfold homY; unfold rho; unfold rho_aux
-  simp [Heisenberg.inv_def, Heisenberg.mul_def, LinearEquiv.conj, Y_coor_add_X, Y_coor_add_Y, XY_coor, Y_in_Y]
+variable {B} in
+lemma Polarizatiion.rhoY.eq (x : X) (y y': Y) (t:K) (f : P.Ymodel R) : (P.rhoY χ) (⟨x+y,t⟩: Heisenberg B) f y'=  χ ⟨⟨x,t - B y y + B x y' - B y' x - B (x + y') y⟩,by simp [LinearMap.BilinForm.toSubgroup, Set.prod]⟩ * f (y' - y):= by
+  unfold Polarization.rhoY; unfold Polarization.homY; unfold rho; unfold rho_aux
+  simp [Heisenberg.inv_def, Heisenberg.mul_def, LinearEquiv.conj, P.Y_coor_add_X, P.Y_coor_add_Y, P.XY_coor, P.Y_in_Y]
   norm_cast
-  simp [add_comm ((-y) : V) ((-x): V), X_coor_add_Y, X_in_X]
+  simp [add_comm ((-y) : V) ((-x): V), P.X_coor_add_Y, P.X_in_X]
   norm_cast
-  have := Y_in_Y B hp (-y : V) 0 (by simp)
+  have := P.Y_in_Y (-y : V) 0 (by simp)
   norm_cast at this
   rw [this]
   congr 2
+  sorry
+  sorry
+  /-
   · rw [← MonoidHom.map_inv]
     congr
-    have (w : Heisenberg B) (hw : w ∈ (subXK B X)): (⟨w, hw⟩ : (subXK B X))⁻¹ = ⟨w⁻¹, by simp_all [subXK, Set.prod]⟩ := by rfl
+    have (w : Heisenberg B) (hw : w ∈ (B.toSubgroup X)): (⟨w, hw⟩ : (B.toSubgroup X))⁻¹ = ⟨w⁻¹, by simp_all [LinearMap.BilinForm.toSubgroup, Set.prod]⟩ := by rfl
     rw [this]
     simp [Heisenberg.inv_def, ← sub_sub]
     rw [add_comm _ t]
@@ -256,20 +263,22 @@ lemma rhoY.eq (x : X) (y y': Y) (t:K) (f : Ymodel hp) : (rhoY hp χ) (⟨x+y,t�
     rw [this, ← neg_one_smul K, CharTwo.neg_eq]
     simp
   · rw [add_comm, sub_eq_add_neg]
+    -/
 
-omit [Fintype K] [FiniteDimensional K V] char2 in
-lemma rhoY.eq' : ρ ((w,t) : Heisenberg B) = (χ₀ t) • ρ w := by
+lemma Polarization.rhoY.eq' : ρ ((w,t) : Heisenberg B) = (χ₀ t) • ρ w := by
   unfold rhoY; unfold homY; unfold rho; unfold rho_aux
   ext f y
   simp [LinearEquiv.conj]
   simp only [XY_coor_linear]
-  have := (XY_coor_linear B hp (w,t)⁻¹ (y,0)).2
+  have := (P.XY_coor_linear  (w:=(w,t)⁻¹) (v:=(y,0))).2
   norm_cast at this
   simp only [this]
-  have := (XY_coor_linear B hp (w,0)⁻¹ (y,0)).2
+  have := (P.XY_coor_linear  (w:=(w,0)⁻¹) (v:=(y,0))).2
   norm_cast at this
   simp only [this]
   simp [Heisenberg.inv_def, XY_coor, Heisenberg.mul_def]
+  sorry
+  /-
   rw [← smul_mul_assoc]
   congr 2
   have (x : ℂˣ) (y : ℂ) : x • y = x * y := by rfl
@@ -285,9 +294,10 @@ lemma rhoY.eq' : ρ ((w,t) : Heisenberg B) = (χ₀ t) • ρ w := by
   congr 2
   simp [Y_in_Y, X_coor_of_Y, ← add_assoc]
   simp [← sub_sub, add_comm _ t, add_sub, add_sub]
+  -/
 
 
 variable {B} in
-def rhoY.map_mul (h h' : Heisenberg B):  ρ h * ρ h' =  ρ (h * h') := by simp only [_root_.map_mul]
+def Polarization.rhoY.map_mul (h h' : Heisenberg B):  ρ h * ρ h' =  ρ (h * h') := by simp only [_root_.map_mul]
 
 end Heisenberg_Representation
