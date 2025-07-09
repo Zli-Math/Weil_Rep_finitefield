@@ -11,16 +11,17 @@ variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V][Module K V]
 
 variable (B : LinearMap.BilinForm K V)
 
-abbrev Heisenberg (B : LinearMap.BilinForm K V)
+abbrev LinearMap.BilinForm.Heisenberg (B : LinearMap.BilinForm K V)
  := V × K
 
+open LinearMap.BilinForm
 
+namespace LinearMap.BilinForm
+abbrev Heisenberg.mk (w : V) (k : K) : B.Heisenberg := ⟨w,k⟩
 
-abbrev Heisenberg.mk (w : V) (k : K) : Heisenberg B := ⟨w,k⟩
+abbrev hmul (a b : B.Heisenberg) : B.Heisenberg := ⟨ a.1 + b.1 , a.2 + b.2 + B  a.1  b.1 ⟩
 
-abbrev LinearMap.BilinForm.hmul (a b : Heisenberg B) : Heisenberg B := ⟨ a.1 + b.1 , a.2 + b.2 + B  a.1  b.1 ⟩
-
-abbrev LinearMap.BilinForm.hmul_def (a b : Heisenberg B) : B.hmul a b = ⟨ a.1 + b.1 , a.2 + b.2 + B  a.1  b.1 ⟩ := rfl
+abbrev hmul_def (a b : Heisenberg B) : B.hmul a b = ⟨ a.1 + b.1 , a.2 + b.2 + B  a.1  b.1 ⟩ := rfl
 
 
 
@@ -365,6 +366,8 @@ def LinearMap.BilinForm.toSubgroup (X : Submodule K V) : Subgroup (Heisenberg B)
 
 end Polarization
 
+end LinearMap.BilinForm
+
 end HeisenbergGroup
 
 
@@ -376,7 +379,7 @@ local notation "KK" => (ZMod 2)
 
 abbrev BB : LinearMap.BilinForm KK V2 := !![1].toBilin'
 
-abbrev a : Heisenberg (BB) := ⟨1,0⟩
+abbrev a : BB.Heisenberg := ⟨1,0⟩
 
 --#eval a
 

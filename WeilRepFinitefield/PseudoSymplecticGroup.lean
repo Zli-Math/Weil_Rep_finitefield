@@ -1,5 +1,6 @@
 import Mathlib
 import WeilRepFinitefield.Compute
+import WeilRepFinitefield.Heisenberg
 
 --import WeilRepFinitefield.Quadratic
 
@@ -103,9 +104,15 @@ abbrev σ (a : B.Ps):= a.1.1
 variable {B} in
 abbrev f (a : B.Ps):= a.1.2
 
+@[simp]
+lemma σ_def {a : V≃ₗ[K] V} {f : QuadraticForm K V} {h : B.associated a f} : σ (⟨(a,f),h⟩:B.Ps) = a  := rfl
+
+@[simp]
+lemma f_def {a : V≃ₗ[K] V} {ff : QuadraticForm K V} {h : B.associated a ff} : f (⟨(a,ff),h⟩:B.Ps) = ff  := rfl
 
 
-lemma comp_associatedB  (a b : B.Ps) : ∀ w v, QuadraticMap.polar (b.f + ((a.f).comp (b.σ).toLinearMap)) w v = B ((a.σ * b.σ) w) ((a.σ * b.σ) v) - B w v := by
+
+lemma comp_associated  (a b : B.Ps) : ∀ w v, QuadraticMap.polar (b.f + ((a.f).comp (b.σ).toLinearMap)) w v = B ((a.σ * b.σ) w) ((a.σ * b.σ) v) - B w v := by
   sorry
   /-
   intro w v
@@ -117,10 +124,15 @@ lemma comp_associatedB  (a b : B.Ps) : ∀ w v, QuadraticMap.polar (b.f + ((a.f)
   -/
 
 instance instHMul: HMul (B.Ps)  (B.Ps) (B.Ps) where
-  hMul := fun a b =>  ⟨ ((a.σ) * (b.σ), b.f + ((a.f).comp  (b.σ).toLinearMap)), comp_associatedB B a b⟩
+  hMul := fun a b =>  ⟨ ((a.σ) * (b.σ), b.f + ((a.f).comp  (b.σ).toLinearMap)), comp_associated B a b⟩
 
 
-lemma  mul_def (a b : B.Ps) : a * b = ⟨ ((a.σ) * (b.σ), b.f + ((a.f).comp  (b.σ).toLinearMap)), comp_associatedB B a b⟩ := by rfl
+
+@[simp]
+lemma  mul_def (a b : B.Ps) : a * b = ⟨ ((a.σ) * (b.σ), b.f + ((a.f).comp  (b.σ).toLinearMap)), comp_associated B a b⟩ := by rfl
+
+
+
 
 instance instSemigroup : Semigroup (B.Ps) where
   mul := HMul.hMul
@@ -146,98 +158,75 @@ lemma inv_associated (σ : V ≃ₗ[K] V) (f : QuadraticForm K V) (hB : B.associ
 instance  instInv: Inv  (B.Ps) where
    inv := fun a => ⟨((a.σ).symm , (- a.f).comp  (a.σ).symm)  , inv_associated B a.σ a.f a.2⟩
 
-lemma inv_def (a : B.Ps) : a⁻¹ = ⟨((a.σ).symm , (- a.f).comp  (a.σ).symm) , inv_associated B a.σ a.f a.2⟩
-:= rfl
+lemma inv_def (a : B.Ps) : a⁻¹ = ⟨((a.σ).symm , (- a.f).comp  (a.σ).symm) , inv_associated B a.σ a.f a.2⟩ := by rfl
 
-
-
-end LinearMap.BilinForm.Ps
-
-end PS_Group
-
-
---omit hnd in
-
-lemma one_quadraticform : Quadraticform (0 : V → K) := by
-  constructor
-  · constructor
-    · intro r w v
-      simp [form]
-    · intro r w v
-      simp [form]
-    · intro r w v
-      simp [form]
-    · intro r w v
-      simp [form]
-  · intro t v
-    simp
-
---omit hnd in
-lemma one_associatedB : ∀ w v, form 0 w v = B ((1 : Sp B) w) ((1 : Sp B) v) - B w v := by
-  intro w v
-  simp [form]
+lemma one_associated : B.associated 1 0 := by
+  simp [associated,QuadraticMap.polar]
 
 instance hasOne: One (Ps B)  where
-  one := ⟨(1 : Sp B), 0, one_quadraticform, one_associatedB B⟩
-
-
+  one := ⟨(1 , 0), one_associated B⟩
 
 @[simp]
-lemma One_def : (1 : Ps B) = ⟨(1 : Sp B), 0, one_quadraticform, one_associatedB B⟩ := rfl
+lemma One_def : (1 : Ps B) = ⟨(1, 0), one_associated B⟩ := rfl
 
-
-
-instance instMulOneClass : MulOneClass (Ps B) where
+instance instMulOneClass : MulOneClass (B.Ps) where
   one_mul := by
     intro a
     rw [mul_def]
-    ext v;unfold Ps.σ
-    · rw [One_def,coe_map,Sp.map_mul,Sp.map_one,Sp.coe_map]
-    · simp only [One_def, Pi.zero_comp, Pi.add_apply, Pi.zero_apply, add_zero]
+    simp only [One_def, σ_def, one_mul, f_def]
+    simp only [One_def, one_mul,<-Subtype.val_inj]
+    apply Prod.ext
+    · ext x; rfl
+    · ext x ; simp only [QuadraticMap.add_apply, QuadraticMap.comp_apply, LinearEquiv.coe_coe,
+      QuadraticMap.zero_apply, add_zero]
   mul_one := by
     intro a
     rw [mul_def]
-    ext v
-    · rw [One_def,coe_map,Sp.map_mul,Sp.map_one,Sp.coe_map]
-    · simp only [One_def, Pi.add_apply, Pi.zero_apply, comp_apply, zero_add]
-      rfl
+    simp only [One_def, σ_def, mul_one, f_def, LinearEquiv.coe_toLinearMap_one, zero_add]
+    simp only [One_def, one_mul,<-Subtype.val_inj]
+    apply Prod.ext
+    · ext x; rfl
+    · ext x; simp only [LinearEquiv.coe_toLinearMap_one, zero_add, QuadraticMap.comp_apply, id_coe,
+      id_eq]
 
-
-
-
-instance instMonoid : Monoid (Ps B) where
+instance instMonoid : Monoid (B.Ps) where
   one_mul := one_mul
   mul_one := mul_one
-  npow := npowRecAuto
-  npow_zero := by intros; rfl
-  npow_succ := by intros; rfl
+
 
 noncomputable instance instGroup : Group (Ps B) where
 inv_mul_cancel := by
   intro a
   rw [mul_def,inv_def]
-  ext v
-  · simp only [inv_mul_cancel, One_def]
-  · simp only [Pi.add_apply, comp_apply, coe_map, self_of_map_inv_self, Pi.neg_apply,
-    add_neg_cancel, One_def, Pi.zero_apply]
+  simp
+  constructor
+  · ext; simp only [LinearEquiv.mul_apply, LinearEquiv.symm_apply_apply, LinearEquiv.coe_one,
+    id_eq]
+  · ext; simp only [QuadraticMap.add_apply, QuadraticMap.comp_apply, LinearEquiv.coe_coe,
+    LinearEquiv.symm_apply_apply, QuadraticMap.neg_apply, add_neg_cancel, QuadraticMap.zero_apply]
 
-instance instSmul : SMul (Ps B) (Heisenberg B) where
+end LinearMap.BilinForm.Ps
+
+section Ps_action_on_Heisenberg
+instance instSmul : SMul (B.Ps) (B.Heisenberg) where
   smul := fun s h => (s.σ h.1, s.f h.1 + h.2)
 
-lemma smul_def (s : Ps B) (h : Heisenberg B) : s • h =  (s.σ h.1, s.f h.1 + h.2) := by rfl
+@[simp]
+lemma LinearMap.BilinForm.Ps.smul_def (s : B.Ps) (h : B.Heisenberg) : s • h =  (s.σ h.1, s.f h.1 + h.2) := by rfl
 
-instance instMulAction : MulAction (Ps B) (Heisenberg B) where
+instance instMulAction : MulAction (B.Ps) (B.Heisenberg) where
   smul := SMul.smul
   one_smul := by
     intro b
-    simp [smul_def]
+    simp only [LinearMap.BilinForm.Ps.One_def, LinearMap.BilinForm.Ps.smul_def,
+      LinearMap.BilinForm.Ps.σ_def, LinearEquiv.coe_one, id_eq, LinearMap.BilinForm.Ps.f_def,
+      QuadraticMap.zero_apply, zero_add, Prod.mk.eta]
   mul_smul := by
     intro x y b
-    simp [smul_def, mul_def, ← add_assoc, add_comm]
+    simp only [LinearMap.BilinForm.Ps.mul_def, LinearMap.BilinForm.Ps.smul_def,
+      LinearMap.BilinForm.Ps.σ_def, LinearEquiv.mul_apply, LinearMap.BilinForm.Ps.f_def,
+      QuadraticMap.add_apply, QuadraticMap.comp_apply, LinearEquiv.coe_coe, Prod.mk.injEq, true_and,add_comm,add_assoc]
 
 
-
-
-end pseudo_symplectic
-
-end Pseudo_Symplectic_Group
+end Ps_action_on_Heisenberg
+end PS_Group
