@@ -43,9 +43,13 @@ local notation "ρ" => (P.rhoY χ)
 
 variable [Fintype K] [Fintype V] [DecidableEq K][DecidableEq V]
 
+#synth HSMul (B.Ps) (B.Heisenberg) (B.Heisenberg)
+
 variable {B} in
-abbrev LinearMap.BilinForm.Polarization.omega_aux (s : B.Ps) (w : V): End R (P.Ymodel R) :=
-  ∑ (v : V) , (ρ  $ B.hmul ((B.hmul (s.smul  (v : B.Heisenberg))⁻¹ ) w ) v)
+def LinearMap.BilinForm.Polarization.omega_aux (s : B.Ps) (w : V): End R (P.Ymodel R) :=
+  ∑ (v : V) , ρ  ((s • (B.toH v))⁻¹ * (B.toH w) * (B.toH v))
+
+#print LinearMap.BilinForm.Polarization.omega_aux
 
 variable {B}
 
@@ -74,21 +78,30 @@ def _root_.LinearMap.BilinForm.Ps.ws : V :=
   | [] => 0
   | h :: _ => h
 
-abbrev LinearMap.BiLinForm.Polarization.omega : End R (P.Ymodel R) := P.omega_aux χ s  (s.ws)
+abbrev LinearMap.BilinForm.Polarization.omega : End R (P.Ymodel R) := P.omega_aux χ s  (s.ws)
 
 local notation "ω" => (P.omega χ)
 
+open LinearMap.BilinForm
+open Heisenberg
+open Polarization
+
+#check hmul_def
+
 lemma weq_lemma (H : wₛ ∈ s.Ws):
-∀ w : V, (s • h) * (s • w: Heisenberg B)⁻¹ * wₛ * w  =  (s • (w - h.1): Heisenberg B)⁻¹ * wₛ * (w - h.1) * h := by
+∀ w : V, (s • h) * (s • B.toH w)⁻¹ * (B.toH wₛ) * (B.toH  w)  =  (s • B.toH (w - h.1))⁻¹ * (B.toH wₛ) * (B.toH (w - h.1)) * h := by
   intro w
-  simp [Heisenberg.inv_def, Heisenberg.mul_def, pseudo_symplectic.smul_def]
-  have h1: - s.σ (-h.1) = s.σ (h.1) := by rw [← neg_one_smul K h.1, Sp.slinear, neg_one_smul K (s.σ h.1), neg_neg]
+  simp only [LinearMap.BilinForm.Ps.smul_def, LinearMap.BilinForm.toH_def, add_zero, map_sub,LinearMap.BilinForm.Heisenberg.mul_def]
+  have h1: - s.σ (-h.1) = s.σ (h.1) := by simp only [map_neg, neg_neg]
+  simp_rw [inv_def B]
+  rw [Prod.ext_iff]
   constructor
   · simp [add_assoc]
     rw [← AddCommSemigroup.toAddSemigroup.add_assoc]
-    simp [sub_eq_add_neg, Sp.linear]
-    simp [h1]
-  · simp [add_assoc, add_comm]
+    simp only [sub_eq_add_neg]
+  · sorry
+    /-
+    simp [add_assoc, add_comm]
     rw [← add_assoc, ← sub_eq_add_neg]
     have h2 :  s.f h.1 - s.f w = - s.f (w - h.1) -(B (s.σ (w - h.1)) (s.σ h.1) - B (w - h.1) h.1) := by
       rw [← s.associatedB]
@@ -112,6 +125,7 @@ lemma weq_lemma (H : wₛ ∈ s.Ws):
       rw [← neg_one_mul, ← IsBilinear.rslinear (-1) (s.σ h.1) (s.σ w), neg_one_smul]
     simp [this]
     rw [add_sub, ← sub_eq_add_neg, ← sub_eq_add_neg]
+    -/
 
 
 --Prop 3.2 (1)
@@ -122,6 +136,8 @@ lemma omega_intertwine : (ρ (s • h)) ∘ₗ  (ω s) = (ω s) ∘ₗ (ρ h) :=
   rw [<-LinearMap.mul_eq_comp,Finset.sum_mul]
   simp_rw [rhoY.map_mul]
   set v := h.1
+  sorry
+  /-
   have weq : ∀ w : V, (s • h) * (s • w: Heisenberg B)⁻¹ * (ws χ₀ s) * w =  (s • (w - v): Heisenberg B)⁻¹ * (ws χ₀ s)  * (w - v) * h := weq_lemma χ₀ h s (ws χ₀ s).2
   set f := fun (w:V) => (rhoY hp χ) ((s • w : Heisenberg B)⁻¹ * (ws χ₀ s) * w * h)
   set e := fun (w:V) => w - v
@@ -144,6 +160,7 @@ lemma omega_intertwine : (ρ (s • h)) ∘ₗ  (ω s) = (ω s) ∘ₗ (ρ h) :=
   _ = _ := by
     apply Fintype.sum_congr
     intro; simp only [Set.mem_setOf_eq, Prod.mk_sub_mk, sub_self, _root_.map_mul, f, e]
+  -/
 
 
 /-
@@ -169,7 +186,7 @@ lemma omega_intertwine : (ρ (s • h)) ∘ₗ  (ω s) = (ω s) ∘ₗ (ρ h) :=
 
 
 --define gamma function
-variable (s₁ s₂ : Ps B)(w₁ : Ws χ₀ s₁) (w₂ : Ws χ₀ s₂)(w₁₂ : Ws χ₀ (s₁ * s₂))
+variable (s₁ s₂ : Ps B)(w₁ : s₁.Ws) (w₂ : s₂.Ws)(w₁₂ :(s₁ * s₂).Ws )
 
 structure theta_function (θ : Sp B → ℝ) where
 mod : θ 1 ≡ 0 [PMOD 2*π]

@@ -234,5 +234,6 @@ instance instMulAction : MulAction (B.Ps) (B.Heisenberg) where
 
 
 
+
 end Ps_action_on_Heisenberg
 end PS_Group
