@@ -326,11 +326,11 @@ instance : QuadraticRing.Nonsquare (-1 : Q) where
 #synth Field QQ
 #synth DivisionCommMonoid QQ
 #check (⟨0,1⟩ : Q)
-#eval! (⟨0,1⟩: Q) / (⟨1,1⟩:Q)
+#eval (⟨0,1⟩: Q) / (⟨1,1⟩:Q)
 #check !QR[0;1;0;0]
 #eval ((!QR[0;1;0;0]) * (!QR[1;0;0;1]) :QQ)
-#eval! ((!QR[0;1;0;0]) * (!QR[1;0;0;1])⁻¹ :QQ)
-#eval! !QR[0;1;0;0] / !QR[1;0;0;1]
+#eval ((!QR[0;1;0;0]) * (!QR[1;0;0;1])⁻¹ :QQ)
+#eval !QR[0;1;0;0] / !QR[1;0;0;1]
 
 
 end

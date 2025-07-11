@@ -52,8 +52,18 @@ def LinearMap.BilinForm.Polarization.omega_aux (s : B.Ps) (w : V): End R (P.Ymod
 #print LinearMap.BilinForm.Polarization.omega_aux
 
 variable {B}
+abbrev _root_.LinearMap.BilinForm.Ps.assoc (v : V) :=
+ ∀ w, s.σ w = w → (s.f w) =  ⟪v,w⟫
 
-abbrev _root_.LinearMap.BilinForm.Ps.Ws := {v | ∀ w, s.σ w = w → (s.f w) =  ⟪v,w⟫}
+
+abbrev _root_.LinearMap.BilinForm.Ps.Ws := {v | s.assoc v}
+
+
+--instance  [Fintype V] [DecidableEq V] [DecidableEq K]: Decidable (∀ w, s.σ w = w → (s.f w) =  ⟪v,w⟫) := by infer_instance
+
+
+
+
 
 lemma _root_.LinearMap.BilinForm.Ps.Ws_nonempty : Nonempty (s.Ws) := by sorry
 
@@ -72,11 +82,11 @@ end test
 
 variable [FinEnum V]
 
-def _root_.LinearMap.BilinForm.Ps.ws : V :=
-  let Ws := FinEnum.toList $ s.Ws
-  match Ws with
-  | [] => 0
-  | h :: _ => h
+
+abbrev FinEnum.some (α : Type*) [h : FinEnum α] [Nonempty α]: α :=  h.equiv.symm ⟨0, by exact FinEnum.card_pos⟩
+
+
+def _root_.LinearMap.BilinForm.Ps.ws : V := @FinEnum.some s.Ws _ s.Ws_nonempty
 
 abbrev LinearMap.BilinForm.Polarization.omega : End R (P.Ymodel R) := P.omega_aux χ s  (s.ws)
 
@@ -137,105 +147,52 @@ lemma omega_intertwine : (ρ (s • h)) ∘ₗ  (ω s) = (ω s) ∘ₗ (ρ h) :=
   simp_rw [rhoY.map_mul]
   set v := h.1
   sorry
-  /-
-  have weq : ∀ w : V, (s • h) * (s • w: Heisenberg B)⁻¹ * (ws χ₀ s) * w =  (s • (w - v): Heisenberg B)⁻¹ * (ws χ₀ s)  * (w - v) * h := weq_lemma χ₀ h s (ws χ₀ s).2
-  set f := fun (w:V) => (rhoY hp χ) ((s • w : Heisenberg B)⁻¹ * (ws χ₀ s) * w * h)
-  set e := fun (w:V) => w - v
-  calc
-  _ =  ∑ w : V, (rhoY hp χ) ((s • (w-v) : Heisenberg B)⁻¹ * (ws χ₀ s) * (w-v) * h) := by
-    apply Fintype.sum_congr
-    intro w; congr 1;
-    rw [<-weq w]
-    group
-  _= ∑ w : V, f (e w):= by
-    apply Fintype.sum_congr
-    intro; simp only [Set.mem_setOf_eq, Prod.mk_sub_mk, sub_self, _root_.map_mul, f, e]
-  _ = ∑ w : V, f (w) := by
-    refine Function.Bijective.sum_comp ?_ f
-    constructor
-    · apply Function.LeftInverse.injective (g:= fun w => w+v)
-      intro x; simp [e]
-    · apply Function.RightInverse.surjective (g:= fun w => w+v)
-      intro x; simp [e]
-  _ = _ := by
-    apply Fintype.sum_congr
-    intro; simp only [Set.mem_setOf_eq, Prod.mk_sub_mk, sub_self, _root_.map_mul, f, e]
-  -/
 
-
-/-
-  _ = ∑ w , f ((fun w => w-v) w) := by
-    apply Fintype.sum_congr
-    intro ; simp [f]
-  -- - = ∑ w, f w := by sorry
-  _ = _ := by
-    --apply Function.Bijective.sum_comp ?_ f
-    sorry
--/
-/-
-  _ =  ∑ w : V, (rhoY hp χ) ((s.σ (w-v) : Heisenberg B)⁻¹ * (ws χ₀ s) * (w-v) * h) := by
-    apply Fintype.sum_congr
-    intro w; congr 1;
-    rw [<-weq w]
-    group
-  _ = _ := by
-    let f := fun (w:V) => (rhoY hp χ) ((s.σ w : Heisenberg B)⁻¹ * (ws χ₀ s) * w * h)
-    --apply Function.Bijective.sum_comp ?_ f
-    sorry
--/
-
-
+--#synth Inv (Matrix  (Fin (2)) (Fin (2)) (ZMod 2))
 --define gamma function
-variable (s₁ s₂ : Ps B)(w₁ : s₁.Ws) (w₂ : s₂.Ws)(w₁₂ :(s₁ * s₂).Ws )
-
-structure theta_function (θ : Sp B → ℝ) where
-mod : θ 1 ≡ 0 [PMOD 2*π]
-
-variable (θ : Sp B→ ℝ) (Hθ : theta_function θ)
-
-structure gamma_function (γ : (Sp B) → ℂ) where
-one : γ 1 = 1
-eq : ∀ σ , γ σ = (1/2) ^ ((LinearMap.id - σ.1.1).rank.toNat / 2) * exp ^ (Complex.I * θ (σ))
+variable (s1 s2 : Ps B)
 
 
+abbrev cocycle [DecidableEq R] [DecidableEq V] [Fintype Y] : R := ((ω s1).toMatrix' * (ω s2).toMatrix' * (ω (s1 * s2)).toMatrix'⁻¹).trace
+
+abbrev _root_.LinearMap.BilinForm.Ps.I := LinearMap.range (LinearMap.id - s.σ.toLinearMap)
 
 
-abbrev I : AddSubgroup V where
-  carrier := {u : V | ∃ w : V, w - s.σ w = u}
-  add_mem' := by
-    intro a b ha hb
-    simp_all
-    obtain ⟨w1, h1⟩ := ha
-    obtain ⟨w2, h2⟩ := hb
-    use (w1 + w2)
-    rw [← h1, ← h2,Sp.linear, ← sub_sub]
-    have : w1 + w2 - s.σ w1 - s.σ w2 = w1 - s.σ w1 + (w2 - s.σ w2) := by
-      rw [sub_eq_add_neg _ (s.σ w1), add_assoc, add_comm w2 _, ← add_assoc, ← sub_eq_add_neg, add_sub]
-    simp [this]
-  zero_mem' := by
-    simp
-    have := Sp.slinear (s.σ) (0 : K) (w : V)
-    simp at this
-    use 0
-    simp [this]
-  neg_mem' := by
-    intro x hx
-    simp_all
-    obtain ⟨w, hw⟩ := hx
-    use (-w)
-    have : -w = (-1 : K) • w := by rw [neg_one_smul]
-    rw [this, Sp.slinear, ← smul_sub, hw, neg_one_smul]
+abbrev _root_.LinearMap.BilinForm.Ps.I' := Set.range (fun v => v -  s.σ v)
 
-abbrev I₀ := { (u₁, u₂) : (I s₁ w) × (I s₂ w)|  (u₁ : V) + u₂  = w₁₂ - w₁ - w₂}
 
-instance FintypeI : Fintype (I₀ χ₀ w s₁ s₂ w₁ w₂ w₁₂) := Subtype.fintype _
+abbrev _root_.LinearMap.BilinForm.Ps.I₀ := { ((u1, u2) : (s1.I ) × (s2.I)) |  u1.1 + u2.1  = (s1 * s2).ws - s1.ws - s2.ws}
+
+--instance FintypeI : Fintype (s1.I₀ s₂) := Subtype.fintype _
+
+variable {s} in
+abbrev _root_.LinearMap.BilinForm.Ps.I.fiber (u : s.I) := {w | w - s.σ w = u}
+
+instance (u : s.I) : Nonempty { w | w - s.σ w =u} := by
+  obtain ⟨u,w,hw⟩ := u
+  use w
+  simp only [LinearMap.sub_apply, LinearMap.id_coe, id_eq, LinearEquiv.coe_coe] at hw
+  exact hw
+
+abbrev _root_.LinearMap.BilinForm.Ps.fiberw (u : s.I) := FinEnum.some { w | w - s.σ w =u}
+
+
+abbrev cocycle' :=  (∑ ((u1, u2) ∈ (s1.I₀ s2)),
+  let w1 := s1.fiberw u1
+  let w2 := s2.fiberw u2
+  χ₀ (s1.f w1 + ⟪s1.ws, w1⟫ + B (u1) (w1 + s1.ws) + s2.f u2 + ⟪s2.ws, w2⟫) * χ₀ (B (u2) (w2 + s2.ws) + B (u1 + s1.ws) (w2 + s2.ws)))
 
 
 
 
 
---define cocycle Corollary 3.4
-variable (γ : Sp B → ℂ) (Hγ : gamma_function θ γ)
+
+
+
+
+
+
+
 
 def cocycle := γ (s₁.σ) * γ (s₂.σ) * (γ (s₁.σ * s₂.σ))⁻¹ * (∑ ((u₁, u₂) ∈ (I₀ χ₀ w s₁ s₂ w₁ w₂ w₁₂)), χ₀ (s₁.f u₁.2.choose + ⟪w₁.1, u₁.2.choose⟫ + B (u₁.2.choose - s₁.σ u₁.2.choose) (w₁.1 + u₁.2.choose) + s₂.f u₂.2.choose + ⟪w₂.1, u₂.2.choose⟫) * χ₀ (B (u₂.2.choose - s₂.σ u₂.2.choose) (w₂.1 + u₂.2.choose) + B ((u₁.2.choose - s₁.σ u₁.2.choose) + w₁.1) ((u₂.2.choose - s₂.σ u₂.2.choose) + w₂.1)))
 
@@ -297,7 +254,7 @@ lemma cong2 : I s w = (id_σ s).range := by
     rw [Sp.coe_map] at hv
     exact hv
 
-def quotientkers : ∀ (s : Ps B), V ⧸ (Ker s w) ≃+ (I s w) := by
+def quotientkers : ∀ (s : Ps B), V ⧸ (Ker s w) ≃+ (I s) := by
   intro s
   rw [cong1, cong2]
   exact QuotientAddGroup.quotientKerEquivRange (id_σ s)

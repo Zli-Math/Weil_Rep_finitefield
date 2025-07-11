@@ -195,11 +195,10 @@ def quadSnocUnexpander : Lean.PrettyPrinter.Unexpander
   | _ => throw ()
 
 
-instance {n : ℕ} [Repr K]  : Repr ((Fin n → K) ≃ₗ[K] (Fin n → K))  where
+instance instReprGL {n : ℕ} [Repr K]   : Repr ((Fin n → K) ≃ₗ[K] (Fin n → K))  where
   reprPrec := fun v _ => "!GL" ++ repr v.toGL'.1 ++ ""
 
 end GLNotation
-
 
 /-
 namespace Compute.test
@@ -251,6 +250,12 @@ example : FinEnum.toList (V2 →ₗ[F]V2) =[!![0, 0; 0, 0].toLin',
  !![1, 1; 1, 0].toLin',
  !![1, 1; 1, 1].toLin'] := by decide
 
+abbrev m :=  (!GL !![0, 1; 1, 0]:GL2).1
+
+#check m
+
+#eval  m.toMatrix'.trace
+
 #eval FinEnum.toList ((Fin 2→ F) →ₗ[F](Fin 2 → F))
 
 
@@ -276,4 +281,5 @@ example : FinEnum.toList (LinearMap.BilinForm F V2)= [(!![0, 0; 0, 0]).toBilin',
 
 end Compute.test
 -/
+
 end
