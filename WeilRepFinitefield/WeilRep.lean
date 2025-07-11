@@ -156,9 +156,6 @@ abbrev Ps.cocycle' :=  (∑ ((u1, u2) ∈ (s1.I₀ s2)),
 instance : FinEnum s1.I := sorry
 
 
-class HRadical {R : Type*} [Semiring R] (n :ℕ) (a : R) where
-  r : R
-  hr : r ^ n = a
 
 
 abbrev sqrtrank {R : Type*} [Semiring R] (b0 : ℕ) (b1 : R) (α : Type*) [Fintype α] := b1 ^ (Nat.log b0 (Fintype.card α))
@@ -191,27 +188,3 @@ end DPs
 end doublecover
 
 end LinearMap.BilinForm
-
-
---Define Weil representation of Ps B
---Definition 3.8
-structure cover_of_Ps where
-s : Ps B
-integer : ℤ
-omega : End ℂ (Ymodel hp)
-relation :  omega = (-1 : ℂ) ^ integer • ω s
-
-
---Corollory 3.10
-structure Weil_rep where
-rep : cover_of_Ps χ₀ hp χ →  End ℂ (Ymodel hp)
-equation : ∀ (s : cover_of_Ps χ₀ hp χ), rep s = s.3
-
-
-structure Character_of_Weil_rep (s : cover_of_Ps χ₀ hp χ) where
-existw : ∃ w, s.s.σ w - w = ws χ₀ s.s
-char := fun (s : cover_of_Ps χ₀ hp χ) => (-1 : ℂ) ^ (s.integer) * γ (s.s.σ) * Fintype.card (Y) * χ₀ (s.s.f existw.choose - B (s.s.σ existw.choose) (ws χ₀ s.s))
-
-
-
-end

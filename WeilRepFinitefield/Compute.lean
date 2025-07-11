@@ -9,7 +9,14 @@ universe u
 variable {α β γ : Type*} {R :Type u} [CommSemiring R]
 
 
+section FinEnum
+
 abbrev FinEnum.some (α : Type*) [h : FinEnum α] [Nonempty α]: α :=  h.equiv.symm ⟨0, by exact FinEnum.card_pos⟩
+
+
+instance FinEnum.ofRange [DecidableEq β] [FinEnum α] (f :α → β ): FinEnum (Set.range f) := by
+  have :(Set.rangeFactorization f).Surjective := by exact Set.surjective_onto_range
+  apply FinEnum.ofSurjective _ this
 
 
 instance (priority:=5000) instReprSubtype_decide{p : α → Prop} [DecidablePred p] [Repr α] : Repr (Subtype p) where
@@ -25,9 +32,24 @@ instance  Matrix.instFinEnum [FinEnum α] [FinEnum β] [FinEnum γ] :
   unfold Matrix
   infer_instance
 
+variable {M N: Type*} [AddCommMonoid M] [Module R M] [AddCommMonoid N] [Module R N] [FinEnum M] (f : M →ₗ[R] N)
+
+def LinearMap.range_range : range f ≃ Set.range (f : M → N) where
+  toFun := fun a => ⟨a.1, by simp only [Subtype.coe_prop]⟩
+  invFun := fun a => ⟨a, by simp only [SetLike.coe_mem]⟩
+  left_inv := fun _ =>  rfl
+  right_inv := fun _ => rfl
+
+instance LinearMap.instFinEnum_range [DecidableEq N]
+    : FinEnum (LinearMap.range f) := by
+      refine FinEnum.ofEquiv _ (f.range_range)
+
+
 instance  [FinEnum R] [CommSemiring R]  [FinEnum α] [FinEnum β] [DecidableEq α]
  :
   FinEnum $ (α → R) →ₗ[R] (β → R):=  @FinEnum.ofEquiv  (Matrix β α R) ((α → R) →ₗ[R] (β → R)) (Matrix.instFinEnum) (LinearMap.toMatrix'.toEquiv)
+
+
 
 instance [Repr R]  : Repr ((Fin n → R) →ₗ[R] (Fin m → R)) where
   reprPrec := fun v _ => "(" ++ repr v.toMatrix'++").toLin'"
@@ -40,6 +62,8 @@ instance  [FinEnum R]  [FinEnum α] [DecidableEq α]
 
 instance [Repr R]  : Repr (LinearMap.BilinForm R (Fin n → R)) where
   reprPrec := fun v _ => "(" ++ repr v.toMatrix'++").toBilin'"
+
+end FinEnum
 
 section GLSubgroup
 
@@ -202,7 +226,18 @@ def quadSnocUnexpander : Lean.PrettyPrinter.Unexpander
 instance instReprGL {n : ℕ} [Repr K]   : Repr ((Fin n → K) ≃ₗ[K] (Fin n → K))  where
   reprPrec := fun v _ => "!GL" ++ repr v.toGL'.1 ++ ""
 
+
+
 end GLNotation
+
+section HRadical
+
+class HRadical {R : Type*} [Semiring R] (n :ℕ) (a : R) where
+  r : R
+  hr : r ^ n = a
+
+
+end HRadical
 
 /-
 namespace Compute.test
