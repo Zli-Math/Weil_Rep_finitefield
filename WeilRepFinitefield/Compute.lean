@@ -8,6 +8,10 @@ universe u
 
 variable {α β γ : Type*} {R :Type u} [CommSemiring R]
 
+
+abbrev FinEnum.some (α : Type*) [h : FinEnum α] [Nonempty α]: α :=  h.equiv.symm ⟨0, by exact FinEnum.card_pos⟩
+
+
 instance (priority:=5000) instReprSubtype_decide{p : α → Prop} [DecidablePred p] [Repr α] : Repr (Subtype p) where
   reprPrec s prec := "⟨" ++ reprPrec s.val prec ++ ",by decide⟩"
 
