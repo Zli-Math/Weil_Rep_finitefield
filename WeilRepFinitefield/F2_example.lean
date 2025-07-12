@@ -66,7 +66,9 @@ abbrev projY : VV n →ₗ[K] VV n where
     by_cases h : i < n <;> simp [h]
 
 abbrev XX n := LinearMap.range <| projX (n:=n)
-abbrev YY n := LinearMap.range <| projY (n:=n)
+abbrev YY n := LinearMap.range <| embedY (n:=n)
+
+lemma range_rangeYY : (LinearMap.range <| embedY (n:=n)) = (LinearMap.range <| projY (n:=n)) := sorry
 
 abbrev BBmat n: MM n := fun i j => if i < n ∧ j = n+i then 1 else 0
 abbrev BB n : LinearMap.BilinForm K (VV n) := BBmat n |>.toBilin'
@@ -76,7 +78,10 @@ def PP n  : (BB n).Polarization (XX n) (YY n) where
     toFun := fun ⟨a,b⟩ => a +b
     map_add' := sorry
     map_smul' := sorry
-    invFun := fun v => ((projX.rangeRestrict v), (projY.rangeRestrict v))
+    invFun := fun v => ((projX.rangeRestrict v),
+      by
+      rw [YY,range_rangeYY (n:=n)]
+      exact (projY.rangeRestrict v))
     left_inv := sorry
     right_inv := sorry
   }
@@ -153,16 +158,29 @@ def s6 := all_ps[5]
 def s7 := all_ps[6]
 def s8 := all_ps[7]
 
-#eval! P2.cocycle tchi s1 s2
+--#eval! P2.cocycle tchi s1 s2
 
 def matrixcocycle' (ls : List B.Ps):=
   let n := ls.length
   Matrix.of (fun (i : Fin n) (j : Fin n)=> ls[i].cocycle' χ ls[j])
 
 
-def matrixcocycle (ls : List B.Ps):=
+def matrixncocycle' (ls : List B.Ps):=
   let n := ls.length
-  Matrix.of (fun (i : Fin n) (j : Fin n)=> P2.cocycle tchi ls[i] ls[j])
+  Matrix.of (fun (i : Fin n) (j : Fin n)=> ls[i].ncocycle' χ ls[j])
+
+#synth FinEnum s1.I
+def matrixncocycle (ls : List B.Ps):=
+  let n := ls.length
+  Matrix.of (fun (i : Fin n) (j : Fin n)=> P2.ncocycle tchi ls[i] ls[j])
+
+def LinearMap.BilinForm.Polarization.mm := P2.omega tchi s1 |>.toMatrix'
+
+#eval! matrixncocycle all_ps
+
+/-
+
+#eval! matrixncocycle' all_ps
 
 #eval! matrixcocycle all_ps
 
@@ -170,3 +188,4 @@ def matrixcocycle (ls : List B.Ps):=
 
 #eval! s1.cocycle' χ s2
 #eval! s5.cocycle' χ s4
+-/

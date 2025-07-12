@@ -236,6 +236,11 @@ class HRadical {R : Type*} [Semiring R] (n :ℕ) (a : R) where
   r : R
   hr : r ^ n = a
 
+/--
+The following program compute √ |α| if |α| is a b0 power, with a fixed choice of √ b0
+-/
+abbrev sqrtrank {R : Type*} [Semiring R] (b0 : ℕ) (α : Type*) [Fintype α] [hb0 : HRadical 2 (b0:R)] : R := hb0.r ^ (Nat.log b0 (Fintype.card α))
+
 
 end HRadical
 

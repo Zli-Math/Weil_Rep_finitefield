@@ -44,6 +44,26 @@ variable [Fintype K] [Fintype V] [DecidableEq K][DecidableEq V]
 
 #synth HSMul (B.Ps) (B.Heisenberg) (B.Heisenberg)
 
+abbrev Ps.I := LinearMap.range (LinearMap.id - s.σ.toLinearMap)
+
+
+section gammatwist
+
+variable {B}
+variable (s1 s2 : B.Ps)
+
+variable [hsqrt2 : HRadical 2 (2 :R)]
+
+abbrev Ps.gamma : R := 1/(sqrtrank 2 (s1).I)
+
+--abbrev Ps.cgamma  : R := (sqrtrank 2 (s1*s2).I) / (
+--(sqrtrank 2 s1.I) * (sqrtrank 2  s2.I) )
+
+abbrev Ps.cgamma  : R := s1.gamma * s2.gamma / (s1*s2).gamma
+
+end gammatwist
+
+
 variable {B} in
 def Polarization.omega_aux (s : B.Ps) (w : V): End R (P.Ymodel R) :=
   ∑ (v : V) , ρ  ((s • (B.toH v))⁻¹ * (B.toH w) * (B.toH v))
@@ -123,16 +143,14 @@ lemma omega_intertwine : (ρ (s • h)) ∘ₗ  (ω s) = (ω s) ∘ₗ (ρ h) :=
 variable (s1 s2 : Ps B)
 
 
-abbrev Polarization.cocycle_aux [DecidableEq R] [DecidableEq V] [Fintype Y] : R := ((ω s1).toMatrix' * (ω s2).toMatrix' * (ω (s1 * s2)).toMatrix'⁻¹).trace
+abbrev Polarization.cocycle_aux [DecidableEq R] [DecidableEq V] [Fintype Y] [Inhabited Y]: R := ((ω s1).toMatrix' * (ω s2).toMatrix' * (ω (s1 * s2)).toMatrix'⁻¹) default default
 
 
-abbrev Polarization.cocycle [DecidableEq R] [DecidableEq V] [Fintype Y] : R := (P.cocycle_aux χ s1 s2) / (Fintype.card Y)
+abbrev Polarization.cocycle [DecidableEq R] [DecidableEq V] [Fintype Y] : R := (P.cocycle_aux χ s1 s2)
 
 
-abbrev Ps.I := LinearMap.range (LinearMap.id - s.σ.toLinearMap)
 
 
-abbrev Ps.I' := Set.range (fun v => v -  s.σ v)
 
 
 abbrev Ps.I₀ := { ((u1, u2) : (s1.I ) × (s2.I)) |  u1.1 + u2.1  = (s1 * s2).ws - s1.ws - s2.ws}
@@ -154,21 +172,13 @@ abbrev Ps.fiberw (u : s.I) := FinEnum.some { w | w - s.σ w =u}
 abbrev Ps.cocycle' :=  (∑ ((u1, u2) ∈ (s1.I₀ s2)),
   let w1 := s1.fiberw u1
   let w2 := s2.fiberw u2
-  χ₀ (s1.f w1 + ⟪s1.ws, w1⟫ + B (u1) (w1 + s1.ws) + s2.f w2 + ⟪s2.ws, w2⟫) * χ₀ (B (u2) (w2 + s2.ws) + B (u1 + s1.ws) (w2 + s2.ws)))
-
-instance : FinEnum s1.I := sorry
-
-
-
-
-abbrev sqrtrank {R : Type*} [Semiring R] (b0 : ℕ) (b1 : R) (α : Type*) [Fintype α] := b1 ^ (Nat.log b0 (Fintype.card α))
+  χ₀ (s1.f w1 + ⟪s1.ws, w1⟫ + B (u1) (w1 + s1.ws) + s2.f w2 + ⟪s2.ws, w2⟫ + B (u2) (w2 + s2.ws) + B (u1 + s1.ws) (w2 + s2.ws)))
 
 variable [hsqrt2 : HRadical 2 (2 :R)]
 
-abbrev Ps.cgamma  := sqrtrank 2 hsqrt2.r s1.I * sqrtrank 2 hsqrt2.r s2.I / sqrtrank 2 hsqrt2.r s2.I
+abbrev Ps.ncocycle' :=  s1.cgamma s2 * s1.cocycle' χ₀ s2
 
-abbrev Ps.ncocycle :=  s1.cgamma s2 * s1.cocycle' χ₀ s2
-
+abbrev Polarization.ncocycle [DecidableEq R] [DecidableEq V] [Fintype Y] : R := (P.cocycle_aux χ s1 s2) / s1.cgamma s2 / (Fintype.card V)
 
 
 section doublecover
@@ -182,7 +192,7 @@ variable [DecidableEq R]
 namespace DPs
 abbrev mul : B.DPs →B.DPs → B.DPs :=
   fun a b =>
-  let c := a.s.ncocycle χ₀ (b.s)
+  let c := a.s.ncocycle' χ₀ (b.s)
   { s := a.s * b.s, z := a.z + b.z +
     if c = -1  then 1 else 0 }
 
