@@ -50,14 +50,15 @@ def s8 := all_ps[7]
 
 #eval! s1.cocycle' χ s2
 #eval! s5.cocycle' χ s4
+#eval! s5.cocycle' χ s3
+#eval! s2.cocycle' χ s4
+#eval! s2.cocycle' χ s8
+#eval! s6.cocycle' χ s4
+#eval! s6.cocycle' χ s7
 
 section Bilinear_Forms
 
 variable (n : ℕ)
-
-abbrev MM := Matrix (Fin (2*n)) (Fin (2*n)) (ZMod 2)
-
-abbrev VV := Fin (2*n) → (ZMod 2)
 
 
 abbrev J : MM n := fun i j =>
@@ -109,7 +110,7 @@ def nilcone_card (B : MM n) : ℕ :=
 
 variable (B : MM n)
 
-#eval (Finset.univ : Finset (MM 1 × QQ 1))
+--#eval (Finset.univ : Finset (MM 1 × QQ 1))
 
 namespace Witt_1
 

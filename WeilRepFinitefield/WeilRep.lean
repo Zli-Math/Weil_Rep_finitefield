@@ -151,7 +151,7 @@ abbrev Ps.fiberw (u : s.I) := FinEnum.some { w | w - s.σ w =u}
 abbrev Ps.cocycle' :=  (∑ ((u1, u2) ∈ (s1.I₀ s2)),
   let w1 := s1.fiberw u1
   let w2 := s2.fiberw u2
-  χ₀ (s1.f w1 + ⟪s1.ws, w1⟫ + B (u1) (w1 + s1.ws) + s2.f u2 + ⟪s2.ws, w2⟫) * χ₀ (B (u2) (w2 + s2.ws) + B (u1 + s1.ws) (w2 + s2.ws)))
+  χ₀ (s1.f w1 + ⟪s1.ws, w1⟫ + B (u1) (w1 + s1.ws) + s2.f w2 + ⟪s2.ws, w2⟫) * χ₀ (B (u2) (w2 + s2.ws) + B (u1 + s1.ws) (w2 + s2.ws)))
 
 instance : FinEnum s1.I := sorry
 
