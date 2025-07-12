@@ -12,13 +12,78 @@ local notation "K" => (ZMod 2)
 abbrev MM n := Matrix (Fin (2*n)) (Fin (2*n)) (ZMod 2)
 abbrev VV n := Fin (2*n) → (ZMod 2)
 
-abbrev M2 := MM 1
-abbrev V2 := VV 1
+variable {n} in
+abbrev projX : VV n →ₗ[K] VV n where
+  toFun := fun a => (fun i => if i < n then a i else 0)
+  map_add' := by
+    intro x y
+    ext i
+    by_cases h : i < n <;> simp [h]
+  map_smul' := by
+    intro a x
+    ext i
+    by_cases h : i < n <;> simp [h]
 
-local notation "GL2" => ((Fin 2) → F) ≃ₗ[F] ((Fin 2) → F)
 
-abbrev B1mat : M2 := !![0,1; 0,0]
-abbrev B : LinearMap.BilinForm K V2 := B1mat.toBilin'
+variable {n} in
+abbrev embedX : (Fin n → K) →ₗ[K] VV n where
+  toFun := fun a => (fun i => if hi:i < n then a ⟨i,hi⟩  else 0)
+  map_add' := by
+    intro x y
+    ext i
+    by_cases h : i < n <;> simp [h]
+  map_smul' := by
+    intro a x
+    ext i
+    by_cases h : i < n <;> simp [h]
+
+variable {n} in
+abbrev embedY : (Fin n → K) →ₗ[K] VV n where
+  toFun := fun a => (fun i => if hi:i >= n then a ⟨i-n,by
+    refine Nat.sub_lt_left_of_lt_add hi ?_
+    linarith [i.2]
+  ⟩
+  else 0)
+  map_add' := by
+    intro x y
+    ext i
+    by_cases h : i >= n <;> simp [h]
+  map_smul' := by
+    intro a x
+    ext i
+    by_cases h : i >= n <;> simp [h]
+
+variable {n} in
+abbrev projY : VV n →ₗ[K] VV n where
+  toFun := fun a => (fun i => if i < n then 0 else a i)
+  map_add' := by
+    intro x y
+    ext i
+    by_cases h : i < n <;> simp [h]
+  map_smul' := by
+    intro a x
+    ext i
+    by_cases h : i < n <;> simp [h]
+
+abbrev XX n := LinearMap.range <| projX (n:=n)
+abbrev YY n := LinearMap.range <| projY (n:=n)
+
+abbrev BBmat n: MM n := fun i j => if i < n ∧ j = n+i then 1 else 0
+abbrev BB n : LinearMap.BilinForm K (VV n) := BBmat n |>.toBilin'
+
+def PP n  : (BB n).Polarization (XX n) (YY n) where
+  iota := {
+    toFun := fun ⟨a,b⟩ => a +b
+    map_add' := sorry
+    map_smul' := sorry
+    invFun := fun v => ((projX.rangeRestrict v), (projY.rangeRestrict v))
+    left_inv := sorry
+    right_inv := sorry
+  }
+  embed := sorry
+  Xisotropic := sorry
+  Yisotropic := sorry
+
 
 abbrev χ : AddChar (ZMod 2) QQ where
   toFun := fun x => match x with
@@ -30,9 +95,52 @@ abbrev χ : AddChar (ZMod 2) QQ where
     fin_cases a <;> fin_cases b
     all_goals native_decide
 
+abbrev χ' : AddChar (ZMod 2) QQˣ where
+  toFun := fun x => match x with
+  | 0 => 1
+  | 1 => -1
+  map_zero_eq_one' := rfl
+  map_add_eq_mul' := by
+    intros a b;
+    fin_cases a <;> fin_cases b
+    all_goals native_decide
+
+def tchi : ((BB n).toSubgroup (XX n)) →* QQˣ where
+  toFun := fun ⟨⟨a,b⟩,_⟩ => χ' b
+  map_one' := rfl
+  map_mul' := by sorry
+
+
+#synth FinEnum (YY 2)
+
+
+abbrev M2 := MM 1
+abbrev V2 := VV 1
+abbrev P2 := PP 1
+
+local notation "GL2" => ((Fin 2) → K) ≃ₗ[K] ((Fin 2) → K)
+local notation "QF2" => QuadraticForm K n
+
+abbrev B1mat : M2 := !![0,1; 0,0]
+abbrev B : LinearMap.BilinForm K V2 := B1mat.toBilin'
+
+
+
+
 #eval FinEnum.toList <| B.Sp
 
-def all_ps :=  FinEnum.toList <| B.Ps
+--#eval!  FinEnum.toList <| B.Ps
+-- Result of #eval! which lists all elements in B.Ps
+def all_ps :List (B.Ps) :=
+[⟨(!GL!![0, 1; 1, 0], (!QF !![0, 0; 1, 0]).toQuadraticForm),by decide⟩,
+ ⟨(!GL!![0, 1; 1, 0], (!QF !![0, 0; 1, 1]).toQuadraticForm),by decide⟩,
+ ⟨(!GL!![0, 1; 1, 0], (!QF !![1, 0; 1, 0]).toQuadraticForm),by decide⟩,
+ ⟨(!GL!![0, 1; 1, 0], (!QF !![1, 0; 1, 1]).toQuadraticForm),by decide⟩,
+ ⟨(!GL!![1, 0; 0, 1], (!QF !![0, 0; 0, 0]).toQuadraticForm),by decide⟩,
+ ⟨(!GL!![1, 0; 0, 1], (!QF !![0, 0; 0, 1]).toQuadraticForm),by decide⟩,
+ ⟨(!GL!![1, 0; 0, 1], (!QF !![1, 0; 0, 0]).toQuadraticForm),by decide⟩,
+ ⟨(!GL!![1, 0; 0, 1], (!QF !![1, 0; 0, 1]).toQuadraticForm),by decide⟩]
+
 
 #eval! all_ps
 
@@ -45,107 +153,20 @@ def s6 := all_ps[5]
 def s7 := all_ps[6]
 def s8 := all_ps[7]
 
-#eval! s1
-#eval! s2
+#eval! P2.cocycle tchi s1 s2
+
+def matrixcocycle' (ls : List B.Ps):=
+  let n := ls.length
+  Matrix.of (fun (i : Fin n) (j : Fin n)=> ls[i].cocycle' χ ls[j])
+
+
+def matrixcocycle (ls : List B.Ps):=
+  let n := ls.length
+  Matrix.of (fun (i : Fin n) (j : Fin n)=> P2.cocycle tchi ls[i] ls[j])
+
+#eval! matrixcocycle all_ps
+
+#eval! matrixcocycle' all_ps
 
 #eval! s1.cocycle' χ s2
 #eval! s5.cocycle' χ s4
-#eval! s5.cocycle' χ s3
-#eval! s2.cocycle' χ s4
-#eval! s2.cocycle' χ s8
-#eval! s6.cocycle' χ s4
-#eval! s6.cocycle' χ s7
-
-section Bilinear_Forms
-
-variable (n : ℕ)
-
-
-abbrev J : MM n := fun i j =>
-  if j = n+i then 1 else if i = n+j then -1 else 0
-
-abbrev Omega : M2 := J 1
-
-#eval Omega
-
-
-
-abbrev Sp : Finset (MM n) := Finset.filter (fun g =>  g.transpose * (J n) * g = (J n)) (Finset.univ)
-
-namespace Sp2
-
--- Proposition 4.1 part 2
-lemma univ_eq : Sp 1 = {
-  !![0, 1; 1, 0], !![0, 1; 1, 1], !![1, 0; 0, 1],
-  !![1, 0; 1, 1], !![1, 1; 0, 1], !![1, 1; 1, 0]}
-  := by decide
-
-
-end Sp2
-
-abbrev is_form_J (B : MM n) : Prop :=
-   (B -  B.transpose) = J n
-
-abbrev all_B_forms : Finset (MM n) :=
-Finset.filter (is_form_J n) (Finset.univ)
-
-lemma all_bilinearforms : all_B_forms 1=
-  {!![0, 0; 1, 0], !![0, 0; 1, 1], !![0, 1; 0, 0],
- !![0, 1; 0, 1], !![1, 0; 1, 0], !![1, 0; 1, 1],
- !![1, 1; 0, 0], !![1, 1; 0, 1]}
- := by decide
-
-variable {n}
-abbrev quadratic_form (B : MM n) : VV n → ZMod 2:= fun x =>
- (x ⬝ᵥ (B *ᵥ x))
-
-
-abbrev is_orthogonal_transform (B : MM n) : MM n → Prop := fun g =>
-  ∀ x : VV n, quadratic_form B x = quadratic_form B (g *ᵥ x)
-
-
-def nilcone_card (B : MM n) : ℕ :=
-  let nil := Finset.filter (fun x => quadratic_form B x= 0) (Finset.univ : Finset $ VV n)
-  Finset.card nil
-
-variable (B : MM n)
-
---#eval (Finset.univ : Finset (MM 1 × QQ 1))
-
-namespace Witt_1
-
-abbrev B0 : MM 1 := !![0, 1; 0, 0]
-
-
-
-#eval FinEnum.toList $ QuadForm (ZMod 2) 2
-
--- Proposition 4.2 part 1
-abbrev O2 :=  Finset.filter (is_orthogonal_transform B0)  (Finset.univ)
-
-lemma O2.univ_eq : O2 = {!![0, 1; 1, 0], !![1, 0; 0, 1]}
-  := by decide
-
-
-end Witt_1
-
-namespace Witt_0
-
-abbrev B0 : MM 1 := !![1,1;0,1]
--- Proposition 4.5 part 1
-#eval Finset.filter (is_orthogonal_transform B0)  (Finset.univ)
-
-abbrev O2 :=  Finset.filter (is_orthogonal_transform B0)  (Finset.univ)
-
---#eval O2
--- Proposition 4.5 part 1
-lemma O2.univ_eq : O2 =
-  {!![0, 1; 1, 0], !![0, 1; 1, 1], !![1, 0; 0, 1],
-   !![1, 0; 1, 1], !![1, 1; 0, 1], !![1, 1; 1, 0]}
-  := by native_decide
-
-
-
-
-
-end Witt_0

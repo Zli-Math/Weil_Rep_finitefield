@@ -409,7 +409,7 @@ end LinearMap.BilinForm
 end HeisenbergGroup
 
 
-
+/-
 section Eg
 
 local notation "V2" => (Fin 1 → (ZMod 2))
@@ -425,3 +425,4 @@ example : a * a = ⟨0,1⟩ := by decide
 
 
 end Eg
+-/

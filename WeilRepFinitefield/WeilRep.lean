@@ -123,7 +123,10 @@ lemma omega_intertwine : (ρ (s • h)) ∘ₗ  (ω s) = (ω s) ∘ₗ (ρ h) :=
 variable (s1 s2 : Ps B)
 
 
-abbrev Polarization.cocycle [DecidableEq R] [DecidableEq V] [Fintype Y] : R := ((ω s1).toMatrix' * (ω s2).toMatrix' * (ω (s1 * s2)).toMatrix'⁻¹).trace
+abbrev Polarization.cocycle_aux [DecidableEq R] [DecidableEq V] [Fintype Y] : R := ((ω s1).toMatrix' * (ω s2).toMatrix' * (ω (s1 * s2)).toMatrix'⁻¹).trace
+
+
+abbrev Polarization.cocycle [DecidableEq R] [DecidableEq V] [Fintype Y] : R := (P.cocycle_aux χ s1 s2) / (Fintype.card Y)
 
 
 abbrev Ps.I := LinearMap.range (LinearMap.id - s.σ.toLinearMap)
