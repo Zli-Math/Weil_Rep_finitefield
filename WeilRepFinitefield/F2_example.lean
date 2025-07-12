@@ -3,16 +3,22 @@ import WeilRepFinitefield.Compute
 import WeilRepFinitefield.WeilRep
 import WeilRepFinitefield.Quadratictwo
 
+set_option quotPrecheck false
 
+open Matrix LinearMap
 
-open Matrix
-local notation:max "M2" => Matrix (Fin 2) (Fin 2) (ZMod 2)
+local notation "K" => (ZMod 2)
 
+abbrev MM n := Matrix (Fin (2*n)) (Fin (2*n)) (ZMod 2)
+abbrev VV n := Fin (2*n) → (ZMod 2)
 
-local notation:max "V2" => Matrix (Fin 2) (Fin 1) (ZMod 2)
+abbrev M2 := MM 1
+abbrev V2 := VV 1
 
-abbrev B1 : M2 := !![0,1; 0,0]
-abbrev v1 : V2 := !![0; 1]
+local notation "GL2" => ((Fin 2) → F) ≃ₗ[F] ((Fin 2) → F)
+
+abbrev B1mat : M2 := !![0,1; 0,0]
+abbrev B : LinearMap.BilinForm K V2 := B1mat.toBilin'
 
 abbrev χ : AddChar (ZMod 2) QQ where
   toFun := fun x => match x with
@@ -24,6 +30,26 @@ abbrev χ : AddChar (ZMod 2) QQ where
     fin_cases a <;> fin_cases b
     all_goals native_decide
 
+#eval FinEnum.toList <| B.Sp
+
+def all_ps :=  FinEnum.toList <| B.Ps
+
+#eval! all_ps
+
+def s1 := all_ps[0]
+def s2 := all_ps[1]
+def s3 := all_ps[2]
+def s4 := all_ps[3]
+def s5 := all_ps[4]
+def s6 := all_ps[5]
+def s7 := all_ps[6]
+def s8 := all_ps[7]
+
+#eval! s1
+#eval! s2
+
+#eval! s1.cocycle' χ s2
+#eval! s5.cocycle' χ s4
 
 section Bilinear_Forms
 
@@ -40,6 +66,8 @@ abbrev J : MM n := fun i j =>
 abbrev Omega : M2 := J 1
 
 #eval Omega
+
+
 
 abbrev Sp : Finset (MM n) := Finset.filter (fun g =>  g.transpose * (J n) * g = (J n)) (Finset.univ)
 

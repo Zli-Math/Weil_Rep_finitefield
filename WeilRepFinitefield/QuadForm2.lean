@@ -107,7 +107,7 @@ def toQuadraticForm : (QuadForm F n) ≃ (QuadraticForm F (Fin n → F)) where
 
 def _root_.QuadraticForm.toQuadForm := QuadForm.toQuadraticForm (F:=F) (n:=n) |>.symm
 
-instance  [FinEnum R] [CommRing R] [FinEnum R]
+instance _root_.QuadraticForm.instFinEnumQuadraticForm  [CommRing R] [FinEnum R]
  :
   FinEnum $ QuadraticForm R (Fin n → R) :=  FinEnum.ofEquiv  _  (QuadraticForm.toQuadForm)
 

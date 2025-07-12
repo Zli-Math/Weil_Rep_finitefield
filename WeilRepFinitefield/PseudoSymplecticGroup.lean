@@ -1,6 +1,7 @@
 import Mathlib
 import WeilRepFinitefield.Compute
 import WeilRepFinitefield.Heisenberg
+import WeilRepFinitefield.QuadForm2
 
 --import WeilRepFinitefield.Quadratic
 
@@ -93,9 +94,34 @@ variable (B : LinearMap.BilinForm K V) --[hnd : NonDegenerate (alternatingform B
 
 abbrev LinearMap.BilinForm.associated (σ :V≃ₗ[K] V ) (f : QuadraticForm K V) := ∀ w v, QuadraticMap.polar f w v = B (σ w) (σ v) - B w v
 
+
+
 abbrev LinearMap.BilinForm.Ps :=
   {σ : (V≃ₗ[K] V) × (QuadraticForm K V) // B.associated σ.1 σ.2}
 
+
+section Compute
+instance instDecidableassocidated [DecidableEq K] [Fintype V]: Decidable (B.associated σ f) := by
+  infer_instance
+/-
+variable {n : ℕ}
+variable [DecidableEq K]  [FinEnum K]
+
+local notation "VV" => (Fin n → K)
+
+variable (B : LinearMap.BilinForm K (VV))
+
+#synth FinEnum $ (VV ≃ₗ[K]VV)
+instance :FinEnum (QuadraticForm K VV) := QuadraticForm.instFinEnumQuadraticForm
+
+#synth Decidable (B.associated )
+
+instance instFinenum : FinEnum B.Ps := by
+  unfold LinearMap.BilinForm.Ps
+  apply FinEnum.Subtype.finEnum
+-/
+
+end Compute
 
 namespace LinearMap.BilinForm.Ps
 
