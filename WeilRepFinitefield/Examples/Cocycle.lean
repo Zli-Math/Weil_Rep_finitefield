@@ -1,7 +1,12 @@
-import Mathlib
-import WeilRepFinitefield.Compute
 import WeilRepFinitefield.WeilRep
 import WeilRepFinitefield.Quadratictwo
+
+/-!
+# 伪辛群与 cocycle 的有限计算
+
+保留远端较新的极化、特征及 cocycle 矩阵计算。极化和特征延拓仍有原有 sorry；
+#eval! 输出属于实验计算，不是已完成的数学证明。原本地版本完整保存在 archive/F2_example_local.lean。
+-/
 
 set_option quotPrecheck false
 

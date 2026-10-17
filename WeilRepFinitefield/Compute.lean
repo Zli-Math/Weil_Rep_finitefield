@@ -1,5 +1,11 @@
 import Mathlib
 
+/-!
+# 有限枚举与可计算线性代数
+
+提供 FinEnum 的像与子类型实例、矩阵和线性映射的转换、可逆线性群子类型，
+以及有限域计算所需的根式与显示工具。末尾保留原有低维计算例子。
+-/
 
 section
 
@@ -296,7 +302,6 @@ example : FinEnum.toList (V2 →ₗ[F]V2) =[!![0, 0; 0, 0].toLin',
 
 abbrev m :=  (!GL !![0, 1; 1, 0]:GL2).1
 
-#check m
 
 #eval  m.toMatrix'.trace
 

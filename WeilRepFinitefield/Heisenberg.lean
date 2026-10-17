@@ -1,6 +1,11 @@
-import Mathlib
-
 import WeilRepFinitefield.Compute
+
+/-!
+# Heisenberg 群与极化
+
+以双线性型 B 定义 Heisenberg 群，建立群运算、中心与非退化性相关接口，
+并构造极化、坐标分解及相应子群。Schrödinger 函数模型和表示见 HeisenbergRepresentation。
+-/
 
 section HeisenbergGroup
 
@@ -41,7 +46,6 @@ instance instCoeHeisenbergK : Coe K B.Heisenberg where
 
 /-
 variable (v : V) (k : K)
-#check (v : B.Heisenberg)
 -/
 
 abbrev hmul (a b : B.Heisenberg) : B.Heisenberg := ⟨ a.1 + b.1 , a.2 + b.2 + B  a.1  b.1 ⟩
@@ -116,8 +120,6 @@ instance instSemigroup : Semigroup (Heisenberg B) where
     constructor
     · simp only [add_assoc]
     · abel
-
-
 
 instance instInv: Inv  ( Heisenberg B) where
    inv := fun a => ⟨ -a.1 , -a.2 + B  a.1  a.1⟩

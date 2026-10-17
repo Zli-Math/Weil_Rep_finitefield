@@ -9,7 +9,7 @@ package «Weil_Rep_finitefield» where
   -- add any additional package configuration options here
 
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git"
+  "https://github.com/leanprover-community/mathlib4.git" @ "b2158cc40abd16b858e8aa3b0e6f452789b4b28b"
 
 @[default_target]
 lean_lib «WeilRepFinitefield» where

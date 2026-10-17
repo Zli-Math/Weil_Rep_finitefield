@@ -1,7 +1,13 @@
-import Mathlib
---import WeilRepFinitefield.HeisenbergRepresentation
 import WeilRepFinitefield.HeisenbergRepresentation
 import WeilRepFinitefield.PseudoSymplecticGroup
+
+/-!
+# Weil 算子、归一化与 cocycle 草稿
+
+构造平均交织算子、伴随向量选择及 cocycle 的矩阵和有限求和表达式，并定义归一化因子。
+采用远端 master 的最新公式。本文件仍有原有 sorry；DPs 仅给出数据及候选乘法，
+尚未建立完整二重覆盖群和 Weil 表示。具体计算见 Examples/Cocycle。
+-/
 
 open Module
 open BigOperators
@@ -38,11 +44,9 @@ lemma toAlt.rlinear_form : ∀ w v r, ⟪w, v + r⟫ = ⟪w, v⟫ + ⟪w, r⟫ :
 
 local notation "ρ" => (P.rhoY χ)
 
-#check ρ
 
 variable [Fintype K] [Fintype V] [DecidableEq K][DecidableEq V]
 
-#synth HSMul (B.Ps) (B.Heisenberg) (B.Heisenberg)
 
 abbrev Ps.I := LinearMap.range (LinearMap.id - s.σ.toLinearMap)
 
@@ -68,7 +72,6 @@ variable {B} in
 def Polarization.omega_aux (s : B.Ps) (w : V): End R (P.Ymodel R) :=
   ∑ (v : V) , ρ  ((s • (B.toH v))⁻¹ * (B.toH w) * (B.toH v))
 
-#print LinearMap.BilinForm.Polarization.omega_aux
 
 variable {B}
 abbrev Ps.assoc (v : V) :=
@@ -94,7 +97,6 @@ noncomputable section test
 
 variable (α : Type*) [Fintype α]
 
-#synth FinEnum α
 
 end test
 -/
@@ -113,7 +115,6 @@ open LinearMap.BilinForm
 open Heisenberg
 open Polarization
 
-#check hmul_def
 
 lemma weq_lemma (H : wₛ ∈ s.Ws):
 ∀ w : V, (s • h) * (s • B.toH w)⁻¹ * (B.toH wₛ) * (B.toH  w)  =  (s • B.toH (w - h.1))⁻¹ * (B.toH wₛ) * (B.toH (w - h.1)) * h := by

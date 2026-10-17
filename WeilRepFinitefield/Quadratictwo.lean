@@ -1,6 +1,12 @@
 import WeilRepFinitefield.Compute
 import WeilRepFinitefield.QuadraticRing
 
+/-!
+# 有限例子的精确系数域
+
+利用两次二次扩张表示 ℚ(√2,i)，定义 QQ 及相关记号、非平方性实例和平方根实例。
+保留原来的 native_decide 用法；这里是计算例子的系数支持，不是新的 Weil 指数证明。
+-/
 
 section Quadratictwo
 
@@ -14,7 +20,6 @@ local notation "!QR[" a:70 "; " b:70 "; " c:70 "; " d:70 "]"   => (QuadraticRing
   (QuadraticRing.toQring (R := ℚ) (2:ℚ) (a) (b))
   (QuadraticRing.toQring (R := ℚ) (2:ℚ) (c) (d)))
 
-#synth HMul QQ QQ QQ
 
 instance : QuadraticRing.Nonsquare (2 : ℚ) where
   ns' := by
@@ -49,13 +54,7 @@ instance : HRadical 2 (2 : QQ) where
   hr := by native_decide
 
 /-
-#check QQ
-#synth Field Q
-#synth Field QQ
-#synth DivisionCommMonoid QQ
-#check (⟨0,1⟩ : Q)
 #eval (⟨0,1⟩: Q) / (⟨1,1⟩:Q)
-#check !QR[0;1;0;0]
 #eval ((!QR[0;1;0;0]) * (!QR[1;0;0;1]) :QQ)
 #eval ((!QR[0;1;0;0]) * (!QR[1;0;0;1])⁻¹ :QQ)
 #eval !QR[0;1;0;0] / !QR[1;0;0;1]

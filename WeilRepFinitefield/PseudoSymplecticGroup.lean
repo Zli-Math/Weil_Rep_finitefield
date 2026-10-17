@@ -1,9 +1,12 @@
-import Mathlib
-import WeilRepFinitefield.Compute
 import WeilRepFinitefield.Heisenberg
 import WeilRepFinitefield.QuadForm2
 
---import WeilRepFinitefield.Quadratic
+/-!
+# 辛群与伪辛群
+
+定义保持交替形式的辛群，以及由线性变换和二次修正组成的伪辛群，
+建立其运算及对 Heisenberg 群的作用。乘法封闭性 comp_associated 仍含原有 sorry。
+-/
 
 section Symplectic_Group
 
@@ -70,7 +73,6 @@ instance instFact_isAltOne : Fact (B.isAlt 1) where
 @[simp]
 lemma map_one (v : V): (1 : Sp B) v = v := by rfl
 
-#synth MulOneClass (Sp B)
 
 instance instFact_isAutInv : Fact (∀ {σ}, B.isAlt σ → B.isAlt σ.symm) where
   out := by
@@ -81,7 +83,6 @@ instance instFact_isAutInv : Fact (∀ {σ}, B.isAlt σ → B.isAlt σ.symm) whe
     repeat rw [fun_inv_fun] at h
     linear_combination -h
 
-#synth Group B.Sp
 
 end LinearMap.BilinForm.Sp
 end Symplectic_Group
@@ -111,10 +112,8 @@ local notation "VV" => (Fin n → K)
 
 variable (B : LinearMap.BilinForm K (VV))
 
-#synth FinEnum $ (VV ≃ₗ[K]VV)
 instance :FinEnum (QuadraticForm K VV) := QuadraticForm.instFinEnumQuadraticForm
 
-#synth Decidable (B.associated )
 
 instance instFinenum : FinEnum B.Ps := by
   unfold LinearMap.BilinForm.Ps

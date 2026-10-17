@@ -2,6 +2,12 @@ import Mathlib.RingTheory.Algebraic.Basic
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Data.Rat.Sqrt
 
+/-!
+# 可计算二次扩张环
+
+以坐标对表示 R[√d]，建立加法、乘法等环运算；
+在底环为域且 d 非平方的假设下构造域结构，为有限例子的精确系数计算提供支持。
+-/
 
 variable {R: Type*}
 variable [CommRing R]

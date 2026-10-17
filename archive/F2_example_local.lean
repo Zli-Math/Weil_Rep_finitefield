@@ -1,59 +1,65 @@
 import Mathlib
-import WeilRepFinitefield.QuadForm2
+import WeilRepFinitefield.Compute
+import WeilRepFinitefield.WeilRep
+import WeilRepFinitefield.Quadratictwo
 
-section Aux
-instance : ∀ (n : ℕ) [NeZero n],  FinEnum (ZMod n)
-  | 0, h => (h.ne _ rfl).elim
-  | n + 1, _ => @FinEnum.fin (n+1)
+set_option quotPrecheck false
 
-end Aux
+open Matrix LinearMap
 
-open Matrix
-local notation:max "M2" => Matrix (Fin 2) (Fin 2) (ZMod 2)
+local notation "K" => (ZMod 2)
+
+abbrev MM n := Matrix (Fin (2*n)) (Fin (2*n)) (ZMod 2)
+abbrev VV n := Fin (2*n) → (ZMod 2)
+
+abbrev M2 := MM 1
+abbrev V2 := VV 1
+
+local notation "GL2" => ((Fin 2) → F) ≃ₗ[F] ((Fin 2) → F)
+
+abbrev B1mat : M2 := !![0,1; 0,0]
+abbrev B : LinearMap.BilinForm K V2 := B1mat.toBilin'
 
 
-local notation:max "V2" => Matrix (Fin 2) (Fin 1) (ZMod 2)
 
-abbrev B1 : M2 := !![0,1; 0,0]
-abbrev v1 : V2 := !![0; 1]
-
-/-
-#eval B1 * v1
-#eval v1.transpose * B1 * v1
-#eval B1
-#eval B1 * B1
-instance aa: DecidableEq (Fin 2 → ZMod 2) := by infer_instance
-instance aa': DecidableEq M2 := by infer_instance
--/
-
-abbrev χ : (ZMod 2) → ℚ := fun x => match x with
+abbrev χ : AddChar (ZMod 2) QQ where
+  toFun := fun x => match x with
   | 0 => 1
   | 1 => -1
+  map_zero_eq_one' := rfl
+  map_add_eq_mul' := by
+    intros a b;
+    fin_cases a <;> fin_cases b
+    all_goals native_decide
 
-/-
-@[simp]
-lemma Matrix.transpose_fin_two {a b c d: α} : !![a,b;c,d].transpose =!![a,c;b,d] := by
-  ext i j
-  fin_cases i <;> fin_cases j
-  all_goals simp
+#eval FinEnum.toList <| B.Sp
 
-example (a b c d: R) [CommRing R] : !![a,b;c,d].transpose * !![0,1;-1,0] * !![a,b;c,d] = !![0,a*d-b*c; b*c - a*d, 0] := by
-  rw  [Matrix.transpose_fin_two,Matrix.mul_fin_two,Matrix.mul_fin_two]
-  ext i j
-  fin_cases i <;> fin_cases j
-  all_goals ring_nf
--/
+def all_ps :=  FinEnum.toList <| B.Ps
+
+#eval! all_ps
+
+def s1 := all_ps[0]
+def s2 := all_ps[1]
+def s3 := all_ps[2]
+def s4 := all_ps[3]
+def s5 := all_ps[4]
+def s6 := all_ps[5]
+def s7 := all_ps[6]
+def s8 := all_ps[7]
+
+#eval! s1
+#eval! s2
+
+#eval! s2.cocycle' χ s1
+#eval! s1.cocycle' χ s2
+
+
 
 
 section Bilinear_Forms
 
 variable (n : ℕ)
 
-abbrev MM := Matrix (Fin (2*n)) (Fin (2*n)) (ZMod 2)
-
-abbrev VV := Fin (2*n) → (ZMod 2)
-
-abbrev QQ := QuadForm (ZMod 2) (2*n)
 
 abbrev J : MM n := fun i j =>
   if j = n+i then 1 else if i = n+j then -1 else 0
@@ -61,6 +67,8 @@ abbrev J : MM n := fun i j =>
 abbrev Omega : M2 := J 1
 
 #eval Omega
+
+
 
 abbrev Sp : Finset (MM n) := Finset.filter (fun g =>  g.transpose * (J n) * g = (J n)) (Finset.univ)
 
@@ -75,11 +83,17 @@ lemma univ_eq : Sp 1 = {
 
 end Sp2
 
+
+
 abbrev is_form_J (B : MM n) : Prop :=
    (B -  B.transpose) = J n
 
 abbrev all_B_forms : Finset (MM n) :=
 Finset.filter (is_form_J n) (Finset.univ)
+
+#eval J 1
+#eval all_B_forms 1
+
 
 lemma all_bilinearforms : all_B_forms 1=
   {!![0, 0; 1, 0], !![0, 0; 1, 1], !![0, 1; 0, 0],
@@ -102,7 +116,7 @@ def nilcone_card (B : MM n) : ℕ :=
 
 variable (B : MM n)
 
-#eval (Finset.univ : Finset (MM 1 × QQ 1))
+--#eval (Finset.univ : Finset (MM 1 × QQ 1))
 
 namespace Witt_1
 
@@ -126,6 +140,7 @@ namespace Witt_0
 abbrev B0 : MM 1 := !![1,1;0,1]
 -- Proposition 4.5 part 1
 #eval Finset.filter (is_orthogonal_transform B0)  (Finset.univ)
+
 
 abbrev O2 :=  Finset.filter (is_orthogonal_transform B0)  (Finset.univ)
 

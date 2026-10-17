@@ -1,7 +1,11 @@
-import Mathlib
 import WeilRepFinitefield.Compute
 
+/-!
+# 二次型的矩阵编码与正交群
 
+使用下三角矩阵编码二次型，提供 !QF 记号、正交群和有限枚举，并保留低维计算例子。
+矩阵编码与 mathlib 二次型之间的互逆性仍有原有 sorry。旧的逐行编码草稿见 archive/QuadForm.lean。
+-/
 
 section Orthogonal
 variable {R : Type*} [CommSemiring R]  {M : Type*} [AddCommMonoid M]
@@ -31,8 +35,6 @@ instance  instFact_isIsoInv : Fact (∀ {a}, Q.isIso a → Q.isIso a.symm) where
     intro a p v
     simp only [<- p (a.symm v), LinearEquiv.apply_symm_apply]
 
-#check Q.O
-#synth Group Q.O
 
 end QuadraticForm
 
@@ -160,17 +162,14 @@ local notation "GL2" => ((Fin 2) → F) ≃ₗ[F] ((Fin 2) → F)
 abbrev Q : QuadForm F 2 := !QF!![0,0;1,0]
 abbrev QQ := Q.toQuadraticForm
 
-#synth Repr QQ.O
 
 def mm : QQ.O := ⟨LinearEquiv.toGL'.symm ⟨!![0, 1; 1, 0],(by decide)⟩,by decide⟩
 
-#check mm.2
 #eval! FinEnum.toList QQ.O
 
 abbrev Q' : QuadForm F 2 := !QF!![1,0;1,1]
 abbrev QQ' := Q'.toQuadraticForm
 
-#synth Repr QQ'.O
 
 def mm' : QQ'.O := ⟨LinearEquiv.toGL'.symm ⟨!![0, 1; 1, 0],by decide⟩,by decide⟩
 

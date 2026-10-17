@@ -4,13 +4,15 @@ import WeilRepFinitefield.Heisenberg
 
 noncomputable section Schrodinger_Model
 
-open Heisenberg Function
+open Function
 
 
 namespace  Schrodinger_Model
 
 variable {K : Type } [hfK : Field K]  {V : Type } [hcV : AddCommGroup V] [hmV : Module K V]
 (B : LinearMap.BilinForm K V)
+
+abbrev toAlt := B - B.flip
 
 local notation "B_s" => (B.toAlt)
 
@@ -56,7 +58,6 @@ Establish the non-deg
 
 --χ₀ takes values in {1, -1}
 variable {X Y} (hp : Polarization B X Y)
-
 
 
 variable (X) in

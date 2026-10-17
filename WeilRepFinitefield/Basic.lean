@@ -1,2 +1,0 @@
-import WeilRepFinitefield.WeilRep
-import WeilRepFinitefield.QuadForm2
